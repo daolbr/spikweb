@@ -1,0 +1,49 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './auth/AuthContext';
+import RotaProtegida from './auth/RotaProtegida';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Empresas from './pages/Empresas';
+import EmpresaDetalhe from './pages/EmpresaDetalhe';
+import Oportunidades from './pages/Oportunidades';
+import Agenda from './pages/Agenda';
+import Propostas from './pages/Propostas';
+import PropostaDetalhe from './pages/PropostaDetalhe';
+import Campanhas from './pages/Campanhas';
+import Projetos from './pages/Projetos';
+
+const queryClient = new QueryClient();
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              element={
+                <RotaProtegida>
+                  <Layout />
+                </RotaProtegida>
+              }
+            >
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/empresas" element={<Empresas />} />
+              <Route path="/empresas/:id" element={<EmpresaDetalhe />} />
+              <Route path="/oportunidades" element={<Oportunidades />} />
+              <Route path="/agenda" element={<Agenda />} />
+              <Route path="/propostas" element={<Propostas />} />
+              <Route path="/propostas/:id" element={<PropostaDetalhe />} />
+              <Route path="/campanhas" element={<Campanhas />} />
+              <Route path="/projetos" element={<Projetos />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
