@@ -1,64 +1,43 @@
 # Deploy — Supabase (banco) + Vercel (backend + frontend)
 
-Este guia assume que você já conectou Supabase e Vercel nas suas contas. Leva uns 10-15 minutos.
+Roteiro testado e validado. Leva uns 15-20 minutos.
 
 ## 1. Banco de dados no Supabase
 
-1. Em [supabase.com/dashboard](https://supabase.com/dashboard), crie um novo projeto (região mais próxima de você, senha forte do banco).
-2. Depois de criado, vá em **Project Settings → Database → Connection string** e copie a string no formato **URI** (não a "Session pooler" nem a "Transaction pooler" — use a conexão direta para este passo). Vai parecer com:
+1. Em [supabase.com/dashboard](https://supabase.com/dashboard), crie um novo projeto.
+2. Vá em **Database → SQL Editor → New query**, cole o conteúdo de `backend/schema-supabase.sql` e clique em **Run**.
+3. Confirme em **Table Editor** que apareceram 10 tabelas (`usuarios`, `empresas`, `contatos`, `oportunidades`, `historico_oportunidades`, `atividades`, `propostas`, `itens_proposta`, `campanhas`, `projetos`).
+
+## 2. Pegar a connection string (pooler, para uso serverless)
+
+1. Na página do projeto, clique no botão **Connect** (topo da tela).
+2. Escolha a aba **Transaction pooler** (porta `6543`) — importante: não é a "Direct connection". Funções serverless do Vercel abrem/fecham conexões o tempo todo, e a conexão direta do Postgres esgota rápido nesse padrão de uso; o pooler foi feito pra isso.
+3. Copie a string, algo como:
    ```
-   postgresql://postgres:[SUA-SENHA]@db.xxxxxxxxxxxx.supabase.co:5432/postgres
+   postgresql://postgres.xxxxxxxxxxxx:[SUA-SENHA]@aws-0-us-east-1.pooler.supabase.com:6543/postgres
    ```
-
-## 2. Criar as tabelas (uma vez, localmente)
-
-O projeto usa TypeORM com `synchronize` — a forma mais simples de criar o schema é rodar o backend **uma vez, localmente**, apontando para o Supabase:
-
-```bash
-cd backend
-npm install
-```
-
-Edite `backend/.env` temporariamente:
-```
-DATABASE_URL="postgresql://postgres:[SUA-SENHA]@db.xxxxxxxxxxxx.supabase.co:5432/postgres"
-DB_SSL=true
-DB_SYNCHRONIZE=true
-JWT_SECRET="gere-um-segredo-forte-aqui"
-JWT_EXPIRES_IN=8h
-PORT=3001
-```
-
-Rode:
-```bash
-npm run start:dev
-```
-
-Ao subir, o TypeORM cria todas as tabelas no Supabase automaticamente. Depois que aparecer "Nest application successfully started", pode parar o processo (Ctrl+C) — as tabelas já existem. Confirme no Supabase em **Table Editor** que as tabelas apareceram (`empresas`, `contatos`, `oportunidades`, etc.).
-
-**Importante**: depois deste passo, mude `DB_SYNCHRONIZE=false` nas variáveis de ambiente de produção (passo 4) — deixar `true` em produção é arriscado (o TypeORM pode tentar alterar o schema a cada novo deploy).
 
 ## 3. Publicar o backend no Vercel
 
-1. Suba o código para um repositório no GitHub (se ainda não tiver um).
+1. Suba o código para um repositório no GitHub, se ainda não tiver um.
 2. No painel do Vercel, **Add New → Project**, importe o repositório.
 3. Em **Root Directory**, aponte para a pasta `backend`.
-4. Vercel deve detectar o `vercel.json` automaticamente (já está no projeto, configurando a função serverless em `api/index.ts`).
-5. Configure as variáveis de ambiente do projeto (**Settings → Environment Variables**):
+4. O Vercel detecta automaticamente a função serverless em `api/index.ts` — o `vercel.json` usa só `rewrites` (formato moderno). Se você criou o projeto antes desta correção, confirme que `backend/vercel.json` tem apenas `{ "rewrites": [...] }`, sem a chave `builds` (o formato antigo causava um 404 silencioso).
+5. Configure as variáveis de ambiente (**Settings → Environment Variables**):
    ```
-   DATABASE_URL = postgresql://postgres:[SUA-SENHA]@db.xxxxxxxxxxxx.supabase.co:5432/postgres
+   DATABASE_URL = postgresql://postgres.xxxxxxxxxxxx:[SUA-SENHA]@aws-0-us-east-1.pooler.supabase.com:6543/postgres
    DB_SSL = true
    DB_SYNCHRONIZE = false
-   JWT_SECRET = (o mesmo segredo forte do passo 2, ou gere outro)
+   JWT_SECRET = (gere um segredo forte e aleatório)
    JWT_EXPIRES_IN = 8h
    ```
-6. Deploy. Anote a URL gerada (algo como `https://spikcrm-backend.vercel.app`).
-7. Teste: `curl https://spikcrm-backend.vercel.app/api/empresas` deve retornar `{"message":"Unauthorized","statusCode":401}` — sinal de que a API está no ar.
+6. Deploy. Anote a URL gerada (ex.: `https://spikcrm-backend.vercel.app`).
+7. Teste: `curl https://spikcrm-backend.vercel.app/api/empresas` deve devolver `{"message":"Unauthorized","statusCode":401}` — sinal de que a API está no ar (o 401 é esperado, é uma rota protegida).
 
 ## 4. Publicar o frontend no Vercel
 
-1. **Add New → Project** de novo, mesmo repositório, mas com **Root Directory** = `frontend`.
-2. O Vercel detecta Vite automaticamente (build command `npm run build`, output `dist`).
+1. **Add New → Project** de novo, mesmo repositório, **Root Directory** = `frontend`.
+2. Vercel detecta Vite automaticamente.
 3. Variável de ambiente:
    ```
    VITE_API_URL = https://spikcrm-backend.vercel.app/api
@@ -68,7 +47,6 @@ Ao subir, o TypeORM cria todas as tabelas no Supabase automaticamente. Depois qu
 
 ## 5. Criar o primeiro usuário
 
-Com o backend no ar:
 ```bash
 curl -X POST https://spikcrm-backend.vercel.app/api/auth/registrar \
   -H "Content-Type: application/json" \
@@ -79,6 +57,6 @@ Depois é só acessar a URL do frontend e logar.
 
 ## Observações
 
-- O endpoint `/auth/registrar` continua aberto (sem autenticação) mesmo em produção — depois de criar seu usuário admin, considere proteger esse endpoint (ver `README.md`, seção "Pendências").
-- Cold starts: como o backend roda como função serverless, a primeira requisição depois de um tempo ocioso pode demorar 1-2 segundos a mais (a instância do Nest é criada na hora). É normal e não indica erro.
-- Se quiser evitar cold starts e ter mais controle sobre o backend (WebSockets, conexões persistentes, etc.), Railway ou Render — que rodam o backend como um servidor sempre ligado, não serverless — são alternativas mais simples para esse tipo de app. O `docker-compose.yml` do projeto já serve para isso sem adaptação nenhuma.
+- O endpoint `/auth/registrar` continua aberto mesmo em produção — depois de criar seu usuário admin, considere proteger esse endpoint (ver `README.md`, seção "Pendências").
+- Cold starts: a primeira requisição depois de um tempo ocioso pode demorar 1-2s a mais (instância do Nest é criada na hora). Normal.
+- Se você colou a senha do banco em algum lugar exposto (ex. chat, commit público), troque-a em **Database Settings → Reset database password** no Supabase.
