@@ -52,6 +52,10 @@ export interface HistoricoOportunidade {
   id: string;
   anotacao: string;
   estagioNoMomento: string | null;
+  valor: number | string | null;
+  confiabilidade: number | null;
+  previsaoFechamento: string | null;
+  classificacao: 'A' | 'B' | 'C' | null;
   criadoEm: string;
 }
 
@@ -70,6 +74,13 @@ export interface Oportunidade {
   historico?: HistoricoOportunidade[];
   criadoEm: string;
   atualizadoEm: string;
+  confiabilidade: number | null;
+  classificacao: 'A' | 'B' | 'C' | null;
+  vendedorId: string | null;
+  vendedor?: { id: string; nome: string } | null;
+  especialistaId: string | null;
+  especialista?: { id: string; nome: string } | null;
+  vertical: string | null;
 }
 
 export type FunilAgrupado = Record<EstagioFunil, Oportunidade[]>;
@@ -189,4 +200,16 @@ export interface CampoComValor {
   ordem: number;
   podeEditar: boolean;
   valor: string | null;
+}
+
+export interface UsuarioResumo {
+  id: string;
+  nome: string;
+  email: string;
+  papel: 'ADMIN' | 'GESTOR' | 'VENDEDOR';
+}
+
+export interface QuadroTotais {
+  geral: { total: number; valorTotal: number };
+  porClasse: Record<'A' | 'B' | 'C' | 'SEM_CLASSE', { total: number; valorTotal: number; confiabilidadeMedia: number }>;
 }
