@@ -3,7 +3,7 @@ import { useAuth } from '../auth/AuthContext';
 
 const ITENS_NAV = [
   { para: '/dashboard', rotulo: 'Indicadores' },
-  { para: '/oportunidades', rotulo: 'Funil de vendas' },
+  { para: '/oportunidades', rotulo: 'Negócios' },
   { para: '/agenda', rotulo: 'Agenda' },
   { para: '/empresas', rotulo: 'Empresas' },
   { para: '/base-instalada', rotulo: 'Base instalada' },
