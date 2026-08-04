@@ -108,55 +108,6 @@ export interface Atividade {
   criadoEm: string;
 }
 
-export type StatusProposta = 'RASCUNHO' | 'ENVIADA' | 'APROVADA' | 'RECUSADA';
-
-export interface ItemProposta {
-  id: string;
-  descricao: string;
-  quantidade: number | string;
-  valorUnitario: number | string;
-}
-
-export interface Proposta {
-  id: string;
-  titulo: string;
-  empresaId: string;
-  empresa?: Empresa;
-  status: StatusProposta;
-  validade: string | null;
-  valorTotal: number | string;
-  observacoes: string | null;
-  itens?: ItemProposta[];
-  criadoEm: string;
-}
-
-export type StatusCampanha = 'PLANEJADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA';
-
-export interface Campanha {
-  id: string;
-  nome: string;
-  status: StatusCampanha;
-  dataInicio: string | null;
-  dataFim: string | null;
-  orcamento: number | string | null;
-  descricao: string | null;
-  criadoEm: string;
-}
-
-export type StatusProjeto = 'PLANEJADO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
-
-export interface Projeto {
-  id: string;
-  nome: string;
-  empresaId: string;
-  empresa?: Empresa;
-  status: StatusProjeto;
-  dataInicio: string | null;
-  dataFim: string | null;
-  descricao: string | null;
-  criadoEm: string;
-}
-
 export interface ResumoIndicadores {
   pipeline: {
     valorAtivo: number;
@@ -165,7 +116,6 @@ export interface ResumoIndicadores {
   };
   conversao: { ganhas: number; perdidas: number; taxa: number | null };
   atividades: { pendentes: number; concluidas: number; atrasadas: number };
-  receita: { propostasAprovadas: number; valorAprovado: number };
 }
 
 export type EntidadeCustomizavel = 'EMPRESA' | 'CONTATO' | 'OPORTUNIDADE' | 'ATIVIDADE' | 'PROPOSTA';

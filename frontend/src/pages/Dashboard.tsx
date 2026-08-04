@@ -87,18 +87,17 @@ export default function Dashboard() {
           Indicadores
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--color-ink-soft)' }}>
-          Visão geral do funil, atividades e receita
+          Visão geral do funil e atividades
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-3 gap-3 mb-8">
         <Cartao rotulo="Pipeline ativo" valor={formatarMoeda(data.pipeline.valorAtivo)} corDestaque="var(--color-petrol-600)" />
         <Cartao
           rotulo="Taxa de conversão"
           valor={data.conversao.taxa !== null ? `${(data.conversao.taxa * 100).toFixed(0)}%` : '—'}
         />
         <Cartao rotulo="Atividades pendentes" valor={String(data.atividades.pendentes)} corDestaque={data.atividades.atrasadas > 0 ? 'var(--color-clay-700)' : undefined} />
-        <Cartao rotulo="Receita aprovada" valor={formatarMoeda(data.receita.valorAprovado)} corDestaque="#3B8054" />
       </div>
 
       <div className="bg-white border rounded-lg p-5 mb-6" style={{ borderColor: 'var(--color-line)' }}>
