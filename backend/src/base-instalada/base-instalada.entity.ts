@@ -48,6 +48,11 @@ export class BaseInstalada {
   @Column({ type: 'text', nullable: true })
   observacoes: string | null;
 
+  // Evita gerar a mesma oportunidade de renovação duas vezes quando o
+  // job de automação roda repetidamente.
+  @Column({ default: false, name: 'renovacao_gerada' })
+  renovacaoGerada: boolean;
+
   @CreateDateColumn({ name: 'criado_em' })
   criadoEm: Date;
 

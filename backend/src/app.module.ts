@@ -10,6 +10,7 @@ import { AtividadesModule } from './atividades/atividades.module';
 import { IndicadoresModule } from './indicadores/indicadores.module';
 import { CamposCustomizadosModule } from './campos-customizados/campos-customizados.module';
 import { BaseInstaladaModule } from './base-instalada/base-instalada.module';
+import { AutomacoesModule } from './automacoes/automacoes.module';
 import { Usuario } from './usuarios/usuario.entity';
 import { Empresa } from './empresas/empresa.entity';
 import { Contato } from './contatos/contato.entity';
@@ -58,6 +59,7 @@ import { BaseInstalada } from './base-instalada/base-instalada.entity';
     IndicadoresModule,
     CamposCustomizadosModule,
     BaseInstaladaModule,
+    AutomacoesModule,
   ],
 })
 export class AppModule {}

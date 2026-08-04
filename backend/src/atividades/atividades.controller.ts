@@ -28,6 +28,11 @@ export class AtividadesController {
     return this.atividadesService.listar({ empresaId, oportunidadeId, de, ate });
   }
 
+  @Get('priorizadas')
+  listarPriorizadas() {
+    return this.atividadesService.listarPriorizadas();
+  }
+
   @Get(':id')
   buscarPorId(@Param('id') id: string) {
     return this.atividadesService.buscarPorId(id);

@@ -5,6 +5,8 @@ export enum TipoAtividade {
   EMAIL = 'EMAIL',
   VISITA = 'VISITA',
   TAREFA = 'TAREFA',
+  PROSPECCAO = 'PROSPECCAO',
+  FIDELIZACAO = 'FIDELIZACAO',
 }
 
 export enum StatusAtividade {

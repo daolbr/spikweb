@@ -10,6 +10,7 @@ import {
   CriarHistoricoDto,
 } from './dto/oportunidade.dto';
 import { EstagioFunil } from './estagio-funil.enum';
+import { AutomacoesService } from '../automacoes/automacoes.service';
 
 @Injectable()
 export class OportunidadesService {
@@ -18,6 +19,7 @@ export class OportunidadesService {
     private readonly oportunidadesRepo: Repository<Oportunidade>,
     @InjectRepository(HistoricoOportunidade)
     private readonly historicoRepo: Repository<HistoricoOportunidade>,
+    private readonly automacoesService: AutomacoesService,
   ) {}
 
   // Retorna as oportunidades agrupadas por estágio — formato pronto para o Kanban do frontend.
@@ -118,6 +120,11 @@ export class OportunidadesService {
         classificacao: salva.classificacao,
       }),
     );
+
+    if (dto.estagio === EstagioFunil.GANHA && estagioAnterior !== EstagioFunil.GANHA) {
+      const comEmpresa = await this.oportunidadesRepo.findOne({ where: { id }, relations: { empresa: true } });
+      if (comEmpresa) await this.automacoesService.aoGanharOportunidade(comEmpresa);
+    }
 
     return salva;
   }

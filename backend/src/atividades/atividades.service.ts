@@ -4,6 +4,8 @@ import { Between, Repository } from 'typeorm';
 import { Atividade } from './atividade.entity';
 import { StatusAtividade } from './atividade.enums';
 import { CriarAtividadeDto, AtualizarAtividadeDto } from './dto/atividade.dto';
+import { EstagioFunil } from '../oportunidades/estagio-funil.enum';
+import { AutomacoesService } from '../automacoes/automacoes.service';
 
 interface FiltrosAgenda {
   empresaId?: string;
@@ -12,11 +14,21 @@ interface FiltrosAgenda {
   ate?: string;
 }
 
+// Prioridade de avanço no funil — usada para ordenar atividades pendentes
+// priorizando negócios mais avançados primeiro, terminando na prospecção.
+const PRIORIDADE_ESTAGIO: Record<string, number> = {
+  [EstagioFunil.NEGOCIACAO]: 4,
+  [EstagioFunil.PROPOSTA]: 3,
+  [EstagioFunil.QUALIFICACAO]: 2,
+  [EstagioFunil.PROSPECCAO]: 1,
+};
+
 @Injectable()
 export class AtividadesService {
   constructor(
     @InjectRepository(Atividade)
     private readonly atividadesRepo: Repository<Atividade>,
+    private readonly automacoesService: AutomacoesService,
   ) {}
 
   async listar(filtros: FiltrosAgenda): Promise<Atividade[]> {
@@ -30,6 +42,24 @@ export class AtividadesService {
       where,
       relations: { empresa: true, contato: true, oportunidade: true },
       order: { dataInicio: 'ASC' },
+    });
+  }
+
+  // Item 4 das automações: atividades pendentes ordenadas priorizando
+  // negócios mais avançados no funil, depois os sem oportunidade vinculada,
+  // e por último as tarefas de prospecção — dentro de cada grupo, por data.
+  async listarPriorizadas(): Promise<Atividade[]> {
+    const atividades = await this.atividadesRepo.find({
+      where: { status: StatusAtividade.PENDENTE },
+      relations: { empresa: true, contato: true, oportunidade: true },
+      order: { dataInicio: 'ASC' },
+    });
+
+    return atividades.sort((a, b) => {
+      const prioridadeA = a.oportunidade ? PRIORIDADE_ESTAGIO[a.oportunidade.estagio] ?? 0 : 0;
+      const prioridadeB = b.oportunidade ? PRIORIDADE_ESTAGIO[b.oportunidade.estagio] ?? 0 : 0;
+      if (prioridadeA !== prioridadeB) return prioridadeB - prioridadeA;
+      return new Date(a.dataInicio).getTime() - new Date(b.dataInicio).getTime();
     });
   }
 
@@ -65,7 +95,9 @@ export class AtividadesService {
     const atividade = await this.buscarPorId(id);
     atividade.status = StatusAtividade.CONCLUIDA;
     atividade.dataConclusao = new Date();
-    return this.atividadesRepo.save(atividade);
+    const salva = await this.atividadesRepo.save(atividade);
+    await this.automacoesService.aoConcluirFidelizacao(salva);
+    return salva;
   }
 
   async cancelar(id: string): Promise<Atividade> {

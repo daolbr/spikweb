@@ -4,9 +4,10 @@ import { Oportunidade } from './oportunidade.entity';
 import { HistoricoOportunidade } from './historico-oportunidade.entity';
 import { OportunidadesService } from './oportunidades.service';
 import { OportunidadesController } from './oportunidades.controller';
+import { AutomacoesModule } from '../automacoes/automacoes.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Oportunidade, HistoricoOportunidade])],
+  imports: [TypeOrmModule.forFeature([Oportunidade, HistoricoOportunidade]), AutomacoesModule],
   providers: [OportunidadesService],
   controllers: [OportunidadesController],
 })
