@@ -37,6 +37,10 @@ export class UsuariosService {
     return this.usuariosRepo.findOne({ where: { email } });
   }
 
+  async listar(): Promise<Usuario[]> {
+    return this.usuariosRepo.find({ where: { ativo: true }, order: { nome: 'ASC' } });
+  }
+
   async buscarPorId(id: string): Promise<Usuario> {
     const usuario = await this.usuariosRepo.findOne({ where: { id } });
     if (!usuario) throw new NotFoundException('Usuário não encontrado.');

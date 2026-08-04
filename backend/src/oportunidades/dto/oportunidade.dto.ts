@@ -1,14 +1,16 @@
 import {
   IsEnum,
   IsISO8601,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   Min,
   MinLength,
 } from 'class-validator';
-import { EstagioFunil } from '../estagio-funil.enum';
+import { EstagioFunil, ClasseProspect } from '../estagio-funil.enum';
 
 export class CriarOportunidadeDto {
   @IsString()
@@ -28,8 +30,30 @@ export class CriarOportunidadeDto {
   valor?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  confiabilidade?: number;
+
+  @IsOptional()
   @IsISO8601()
   previsaoFechamento?: string;
+
+  @IsOptional()
+  @IsEnum(ClasseProspect)
+  classificacao?: ClasseProspect;
+
+  @IsOptional()
+  @IsUUID()
+  vendedorId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  especialistaId?: string;
+
+  @IsOptional()
+  @IsString()
+  vertical?: string;
 
   @IsOptional()
   @IsString()
@@ -47,13 +71,16 @@ export class AtualizarOportunidadeDto {
   contatoId?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  valor?: number;
+  @IsUUID()
+  vendedorId?: string;
 
   @IsOptional()
-  @IsISO8601()
-  previsaoFechamento?: string;
+  @IsUUID()
+  especialistaId?: string;
+
+  @IsOptional()
+  @IsString()
+  vertical?: string;
 
   @IsOptional()
   @IsString()
@@ -73,8 +100,31 @@ export class MudarEstagioDto {
   anotacao?: string;
 }
 
+// Registrar um acompanhamento é o mecanismo central do legado para
+// reavaliar a oportunidade: além da anotação, pode atualizar valor,
+// confiabilidade, previsão de fechamento e classificação — que passam
+// a ser os novos valores "atuais" da oportunidade (ver nota na entidade).
 export class CriarHistoricoDto {
   @IsString()
   @MinLength(2)
   anotacao: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  valor?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  confiabilidade?: number;
+
+  @IsOptional()
+  @IsISO8601()
+  previsaoFechamento?: string;
+
+  @IsOptional()
+  @IsEnum(ClasseProspect)
+  classificacao?: ClasseProspect;
 }

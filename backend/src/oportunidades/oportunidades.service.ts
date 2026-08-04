@@ -24,7 +24,7 @@ export class OportunidadesService {
   async listarFunil(empresaId?: string) {
     const oportunidades = await this.oportunidadesRepo.find({
       where: empresaId ? { empresaId } : {},
-      relations: { empresa: true, contato: true },
+      relations: { empresa: true, contato: true, vendedor: true, especialista: true },
       order: { criadoEm: 'DESC' },
     });
 
@@ -39,7 +39,7 @@ export class OportunidadesService {
   async buscarPorId(id: string): Promise<Oportunidade> {
     const oportunidade = await this.oportunidadesRepo.findOne({
       where: { id },
-      relations: { empresa: true, contato: true, historico: true },
+      relations: { empresa: true, contato: true, historico: true, vendedor: true, especialista: true },
       order: { historico: { criadoEm: 'DESC' } },
     });
     if (!oportunidade) throw new NotFoundException('Oportunidade não encontrada.');
@@ -47,15 +47,30 @@ export class OportunidadesService {
   }
 
   async criar(dto: CriarOportunidadeDto): Promise<Oportunidade> {
-    const oportunidade = this.oportunidadesRepo.create(dto);
+    const { valor, confiabilidade, previsaoFechamento, classificacao, ...resto } = dto;
+    const oportunidade = this.oportunidadesRepo.create({
+      ...resto,
+      valor: valor ?? 0,
+      confiabilidade,
+      previsaoFechamento,
+      classificacao,
+    });
     const salva = await this.oportunidadesRepo.save(oportunidade);
+
+    // Checkpoint inicial — mesmo padrão do legado: toda mudança de avaliação
+    // (mesmo a primeira) fica registrada no histórico, não só no registro atual.
     await this.historicoRepo.save(
       this.historicoRepo.create({
         oportunidadeId: salva.id,
         anotacao: 'Oportunidade criada.',
         estagioNoMomento: salva.estagio,
+        valor: salva.valor,
+        confiabilidade: salva.confiabilidade,
+        previsaoFechamento: salva.previsaoFechamento,
+        classificacao: salva.classificacao,
       }),
     );
+
     return salva;
   }
 
@@ -97,19 +112,45 @@ export class OportunidadesService {
         oportunidadeId: id,
         anotacao,
         estagioNoMomento: dto.estagio,
+        valor: salva.valor,
+        confiabilidade: salva.confiabilidade,
+        previsaoFechamento: salva.previsaoFechamento,
+        classificacao: salva.classificacao,
       }),
     );
 
     return salva;
   }
 
+  // Mecanismo central do legado: registrar um acompanhamento reavalia a
+  // oportunidade. Os campos informados aqui viram os novos valores
+  // "atuais" (cache) na oportunidade — a fonte da verdade é este histórico.
   async adicionarHistorico(id: string, dto: CriarHistoricoDto): Promise<HistoricoOportunidade> {
     const oportunidade = await this.buscarPorId(id);
+
+    const houveReavaliacao =
+      dto.valor !== undefined ||
+      dto.confiabilidade !== undefined ||
+      dto.previsaoFechamento !== undefined ||
+      dto.classificacao !== undefined;
+
+    if (houveReavaliacao) {
+      if (dto.valor !== undefined) oportunidade.valor = dto.valor;
+      if (dto.confiabilidade !== undefined) oportunidade.confiabilidade = dto.confiabilidade;
+      if (dto.previsaoFechamento !== undefined) oportunidade.previsaoFechamento = dto.previsaoFechamento;
+      if (dto.classificacao !== undefined) oportunidade.classificacao = dto.classificacao;
+      await this.oportunidadesRepo.save(oportunidade);
+    }
+
     return this.historicoRepo.save(
       this.historicoRepo.create({
         oportunidadeId: id,
         anotacao: dto.anotacao,
         estagioNoMomento: oportunidade.estagio,
+        valor: dto.valor ?? oportunidade.valor,
+        confiabilidade: dto.confiabilidade ?? oportunidade.confiabilidade,
+        previsaoFechamento: dto.previsaoFechamento ?? oportunidade.previsaoFechamento,
+        classificacao: dto.classificacao ?? oportunidade.classificacao,
       }),
     );
   }
@@ -119,5 +160,59 @@ export class OportunidadesService {
     if (resultado.affected === 0) {
       throw new NotFoundException('Oportunidade não encontrada.');
     }
+  }
+
+  // Equivalente ao "quadrototais" do legado: pipeline segmentado por
+  // classe de prospect (A/B/C), com contagem, valor total e confiabilidade
+  // média — filtrável por vendedor, especialista, vertical e janela de
+  // previsão de fechamento.
+  async quadroTotais(filtros: {
+    vendedorId?: string;
+    especialistaId?: string;
+    vertical?: string;
+    de?: string;
+    ate?: string;
+  }) {
+    const qb = this.oportunidadesRepo
+      .createQueryBuilder('o')
+      .where('o.estagio NOT IN (:...terminais)', {
+        terminais: [EstagioFunil.GANHA, EstagioFunil.PERDIDA],
+      });
+
+    if (filtros.vendedorId) qb.andWhere('o.vendedor_id = :vendedorId', { vendedorId: filtros.vendedorId });
+    if (filtros.especialistaId) qb.andWhere('o.especialista_id = :especialistaId', { especialistaId: filtros.especialistaId });
+    if (filtros.vertical) qb.andWhere('o.vertical = :vertical', { vertical: filtros.vertical });
+    if (filtros.de) qb.andWhere('o.previsao_fechamento >= :de', { de: filtros.de });
+    if (filtros.ate) qb.andWhere('o.previsao_fechamento <= :ate', { ate: filtros.ate });
+
+    const linhas = await qb
+      .select('o.classificacao', 'classificacao')
+      .addSelect('COUNT(*)', 'total')
+      .addSelect('COALESCE(SUM(o.valor), 0)', 'valorTotal')
+      .addSelect('COALESCE(AVG(o.confiabilidade), 0)', 'confiabilidadeMedia')
+      .groupBy('o.classificacao')
+      .getRawMany<{ classificacao: string | null; total: string; valorTotal: string; confiabilidadeMedia: string }>();
+
+    const porClasse: Record<string, { total: number; valorTotal: number; confiabilidadeMedia: number }> = {
+      A: { total: 0, valorTotal: 0, confiabilidadeMedia: 0 },
+      B: { total: 0, valorTotal: 0, confiabilidadeMedia: 0 },
+      C: { total: 0, valorTotal: 0, confiabilidadeMedia: 0 },
+      SEM_CLASSE: { total: 0, valorTotal: 0, confiabilidadeMedia: 0 },
+    };
+    for (const linha of linhas) {
+      const chave = linha.classificacao ?? 'SEM_CLASSE';
+      porClasse[chave] = {
+        total: Number(linha.total),
+        valorTotal: Number(linha.valorTotal),
+        confiabilidadeMedia: Math.round(Number(linha.confiabilidadeMedia)),
+      };
+    }
+
+    const geral = Object.values(porClasse).reduce(
+      (acc, c) => ({ total: acc.total + c.total, valorTotal: acc.valorTotal + c.valorTotal }),
+      { total: 0, valorTotal: 0 },
+    );
+
+    return { geral, porClasse };
   }
 }

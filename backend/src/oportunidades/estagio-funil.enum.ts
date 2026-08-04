@@ -18,3 +18,12 @@ export const ESTAGIOS_ATIVOS = [
 ];
 
 export const ESTAGIOS_TERMINAIS = [EstagioFunil.GANHA, EstagioFunil.PERDIDA];
+
+// Classificação de qualidade do lead ("Prospect A/B/C" no legado) —
+// dimensão independente do estágio do funil. Um lead pode estar em
+// NEGOCIACAO e ser Classe C (baixa prioridade), por exemplo.
+export enum ClasseProspect {
+  A = 'A',
+  B = 'B',
+  C = 'C',
+}

@@ -29,6 +29,18 @@ export class OportunidadesController {
     return this.oportunidadesService.listarFunil(empresaId);
   }
 
+  // Equivalente ao "quadrototais" do legado — pipeline segmentado por classe.
+  @Get('quadro-totais')
+  quadroTotais(
+    @Query('vendedorId') vendedorId?: string,
+    @Query('especialistaId') especialistaId?: string,
+    @Query('vertical') vertical?: string,
+    @Query('de') de?: string,
+    @Query('ate') ate?: string,
+  ) {
+    return this.oportunidadesService.quadroTotais({ vendedorId, especialistaId, vertical, de, ate });
+  }
+
   @Get(':id')
   buscarPorId(@Param('id') id: string) {
     return this.oportunidadesService.buscarPorId(id);
