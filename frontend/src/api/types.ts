@@ -16,11 +16,14 @@ export interface Contato {
   criadoEm: string;
 }
 
+export type PorteEmpresa = 'MEI' | 'MICRO' | 'PEQUENA' | 'MEDIA' | 'GRANDE';
+
 export interface Empresa {
   id: string;
   nome: string;
   cnpj: string | null;
   segmento: string | null;
+  porte: PorteEmpresa | null;
   cidade: string | null;
   uf: string | null;
   telefone: string | null;
@@ -66,6 +69,7 @@ export interface Oportunidade {
   motivoPerda: string | null;
   historico?: HistoricoOportunidade[];
   criadoEm: string;
+  atualizadoEm: string;
 }
 
 export type FunilAgrupado = Record<EstagioFunil, Oportunidade[]>;
@@ -149,4 +153,40 @@ export interface ResumoIndicadores {
   conversao: { ganhas: number; perdidas: number; taxa: number | null };
   atividades: { pendentes: number; concluidas: number; atrasadas: number };
   receita: { propostasAprovadas: number; valorAprovado: number };
+}
+
+export type EntidadeCustomizavel = 'EMPRESA' | 'CONTATO' | 'OPORTUNIDADE' | 'ATIVIDADE' | 'PROPOSTA';
+export type TipoCampoCustomizado = 'TEXTO' | 'NUMERO' | 'DATA' | 'LISTA' | 'BOOLEANO';
+
+export interface PermissaoCampo {
+  id?: string;
+  papel: 'ADMIN' | 'GESTOR' | 'VENDEDOR';
+  podeVer: boolean;
+  podeEditar: boolean;
+}
+
+export interface CampoCustomizado {
+  id: string;
+  entidade: EntidadeCustomizavel;
+  nome: string;
+  rotulo: string;
+  tipo: TipoCampoCustomizado;
+  opcoesLista: string | null;
+  obrigatorio: boolean;
+  ordem: number;
+  ativo: boolean;
+  permissoes?: PermissaoCampo[];
+  criadoEm: string;
+}
+
+export interface CampoComValor {
+  id: string;
+  nome: string;
+  rotulo: string;
+  tipo: TipoCampoCustomizado;
+  opcoesLista: string | null;
+  obrigatorio: boolean;
+  ordem: number;
+  podeEditar: boolean;
+  valor: string | null;
 }

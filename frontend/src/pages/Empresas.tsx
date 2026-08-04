@@ -4,9 +4,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import type { Empresa, ListaEmpresas } from '../api/types';
 
+const ROTULO_PORTE: Record<string, string> = {
+  MEI: 'MEI',
+  MICRO: 'Microempresa',
+  PEQUENA: 'Pequena empresa',
+  MEDIA: 'Média empresa',
+  GRANDE: 'Grande empresa',
+};
+
 export default function Empresas() {
   const [busca, setBusca] = useState('');
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [erroForm, setErroForm] = useState<string | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -19,14 +28,19 @@ export default function Empresas() {
   });
 
   const criarEmpresa = useMutation({
-    mutationFn: async (nome: string) => {
-      const { data } = await api.post<Empresa>('/empresas', { nome });
+    mutationFn: async (payload: { nome: string; cnpj?: string; porte?: string }) => {
+      const { data } = await api.post<Empresa>('/empresas', payload);
       return data;
     },
     onSuccess: (empresa) => {
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
       setMostrarForm(false);
+      setErroForm(null);
       navigate(`/empresas/${empresa.id}`);
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message;
+      setErroForm(Array.isArray(msg) ? msg[0] : msg ?? 'Não foi possível criar a empresa.');
     },
   });
 
@@ -34,7 +48,9 @@ export default function Empresas() {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const nome = String(form.get('nome') ?? '').trim();
-    if (nome) criarEmpresa.mutate(nome);
+    const cnpj = String(form.get('cnpj') ?? '').trim();
+    const porte = String(form.get('porte') ?? '').trim();
+    if (nome) criarEmpresa.mutate({ nome, cnpj: cnpj || undefined, porte: porte || undefined });
   }
 
   return (
@@ -60,28 +76,55 @@ export default function Empresas() {
       {mostrarForm && (
         <form
           onSubmit={aoSubmeterNovaEmpresa}
-          className="mb-6 bg-white border rounded-lg p-4 flex items-end gap-3"
+          className="mb-6 bg-white border rounded-lg p-4 space-y-3"
           style={{ borderColor: 'var(--color-line)' }}
         >
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-ink mb-1.5">Nome da empresa</label>
-            <input
-              name="nome"
-              required
-              autoFocus
-              placeholder="Ex.: Acme Distribuidora"
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none"
-              style={{ borderColor: 'var(--color-line)' }}
-            />
+          {erroForm && (
+            <div className="text-sm rounded-md px-3 py-2" style={{ backgroundColor: 'var(--color-clay-100)', color: 'var(--color-clay-700)' }}>
+              {erroForm}
+            </div>
+          )}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-1">
+              <label className="block text-xs font-medium text-ink mb-1.5">Nome da empresa</label>
+              <input
+                name="nome"
+                required
+                autoFocus
+                placeholder="Ex.: Acme Distribuidora"
+                className="w-full rounded-md border px-3 py-2 text-sm outline-none"
+                style={{ borderColor: 'var(--color-line)' }}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1.5">CNPJ (opcional)</label>
+              <input
+                name="cnpj"
+                placeholder="XX.XXX.XXX/XXXX-XX"
+                className="w-full rounded-md border px-3 py-2 text-sm outline-none"
+                style={{ borderColor: 'var(--color-line)' }}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1.5">Porte (opcional)</label>
+              <select name="porte" className="w-full rounded-md border px-3 py-2 text-sm outline-none" style={{ borderColor: 'var(--color-line)' }}>
+                <option value="">—</option>
+                {Object.entries(ROTULO_PORTE).map(([valor, rotulo]) => (
+                  <option key={valor} value={valor}>{rotulo}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <button
-            type="submit"
-            disabled={criarEmpresa.isPending}
-            className="rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-            style={{ backgroundColor: 'var(--color-petrol-600)' }}
-          >
-            {criarEmpresa.isPending ? 'Criando…' : 'Criar'}
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={criarEmpresa.isPending}
+              className="rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              style={{ backgroundColor: 'var(--color-petrol-600)' }}
+            >
+              {criarEmpresa.isPending ? 'Criando…' : 'Criar'}
+            </button>
+          </div>
         </form>
       )}
 

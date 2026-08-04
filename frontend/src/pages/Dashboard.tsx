@@ -15,6 +15,47 @@ function formatarMoeda(valor: number) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
+const ESTAGIOS_ATIVOS: EstagioFunil[] = ['PROSPECCAO', 'QUALIFICACAO', 'PROPOSTA', 'NEGOCIACAO'];
+const COR_FUNIL = ['#6B6960', '#4A8A76', '#2E7D67', '#17594A'];
+
+function FunilChart({ porEstagio }: { porEstagio: ResumoIndicadores['pipeline']['porEstagio'] }) {
+  const largura = 640;
+  const alturaFaixa = 56;
+  const gap = 3;
+  const maxQtd = Math.max(1, ...ESTAGIOS_ATIVOS.map((e) => porEstagio[e]?.quantidade ?? 0));
+  const larguraMin = largura * 0.28;
+
+  return (
+    <svg viewBox={`0 0 ${largura} ${(alturaFaixa + gap) * ESTAGIOS_ATIVOS.length}`} width="100%">
+      {ESTAGIOS_ATIVOS.map((estagio, i) => {
+        const info = porEstagio[estagio] ?? { total: 0, quantidade: 0 };
+        const proporcao = maxQtd > 0 ? info.quantidade / maxQtd : 0;
+        const wTopo = i === 0 ? largura : larguraMin + (largura - larguraMin) * (1 - i / ESTAGIOS_ATIVOS.length);
+        const wBase = larguraMin + (largura - larguraMin) * (1 - (i + 1) / ESTAGIOS_ATIVOS.length);
+        const wReal = Math.max(larguraMin * 0.5, wBase * (0.4 + 0.6 * proporcao));
+        const y = i * (alturaFaixa + gap);
+        const xTopoEsq = (largura - wTopo) / 2;
+        const xBaseEsq = (largura - wReal) / 2;
+        return (
+          <g key={estagio}>
+            <polygon
+              points={`${xTopoEsq},${y} ${xTopoEsq + wTopo},${y} ${xBaseEsq + wReal},${y + alturaFaixa} ${xBaseEsq},${y + alturaFaixa}`}
+              fill={COR_FUNIL[i]}
+              opacity={0.92}
+            />
+            <text x={largura / 2} y={y + alturaFaixa / 2 - 6} textAnchor="middle" fill="white" fontSize="13" fontWeight="600">
+              {ROTULO_ESTAGIO[estagio]}
+            </text>
+            <text x={largura / 2} y={y + alturaFaixa / 2 + 13} textAnchor="middle" fill="white" fontSize="12" opacity={0.9}>
+              {info.quantidade} oportunidade{info.quantidade === 1 ? '' : 's'} · {formatarMoeda(info.total)}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 function Cartao({ rotulo, valor, corDestaque }: { rotulo: string; valor: string; corDestaque?: string }) {
   return (
     <div className="bg-white border rounded-lg p-4" style={{ borderColor: 'var(--color-line)' }}>
@@ -39,11 +80,6 @@ export default function Dashboard() {
     return <div className="p-8"><p className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>Carregando…</p></div>;
   }
 
-  const maiorValorEstagio = Math.max(
-    1,
-    ...Object.values(data.pipeline.porEstagio).map((e) => e.total),
-  );
-
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-6">
@@ -67,47 +103,34 @@ export default function Dashboard() {
 
       <div className="bg-white border rounded-lg p-5 mb-6" style={{ borderColor: 'var(--color-line)' }}>
         <h2 style={{ fontFamily: 'var(--font-display)' }} className="text-sm font-semibold text-ink mb-4">
-          Valor em aberto por estágio do funil
+          Funil de vendas — estágios ativos
         </h2>
-        <div className="space-y-3">
-          {(Object.entries(data.pipeline.porEstagio) as [EstagioFunil, { total: number; quantidade: number }][]).map(
-            ([estagio, info]) => (
-              <div key={estagio}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span style={{ color: 'var(--color-ink-soft)' }}>
-                    {ROTULO_ESTAGIO[estagio]} <span className="opacity-60">({info.quantidade})</span>
-                  </span>
-                  <span className="font-medium text-ink">{formatarMoeda(info.total)}</span>
-                </div>
-                <div className="h-2 rounded-full bg-black/[0.04] overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${(info.total / maiorValorEstagio) * 100}%`,
-                      backgroundColor:
-                        estagio === 'GANHA' ? '#3B8054' : estagio === 'PERDIDA' ? 'var(--color-clay-700)' : 'var(--color-petrol-400)',
-                    }}
-                  />
-                </div>
-              </div>
-            ),
-          )}
-        </div>
+        <FunilChart porEstagio={data.pipeline.porEstagio} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-white border rounded-lg p-5" style={{ borderColor: 'var(--color-line)' }}>
           <h2 style={{ fontFamily: 'var(--font-display)' }} className="text-sm font-semibold text-ink mb-3">
-            Oportunidades fechadas
+            Ganha vs. Perdida
           </h2>
-          <div className="flex items-center gap-6">
-            <div>
-              <p className="text-xl font-semibold" style={{ color: '#3B8054' }}>{data.conversao.ganhas}</p>
-              <p className="text-xs" style={{ color: 'var(--color-ink-soft)' }}>Ganhas</p>
-            </div>
-            <div>
-              <p className="text-xl font-semibold" style={{ color: 'var(--color-clay-700)' }}>{data.conversao.perdidas}</p>
-              <p className="text-xs" style={{ color: 'var(--color-ink-soft)' }}>Perdidas</p>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <div className="h-3 rounded-full overflow-hidden flex" style={{ backgroundColor: 'var(--color-line)' }}>
+                {(() => {
+                  const total = Math.max(1, data.conversao.ganhas + data.conversao.perdidas);
+                  const pctGanha = (data.conversao.ganhas / total) * 100;
+                  return (
+                    <>
+                      <div style={{ width: `${pctGanha}%`, backgroundColor: '#3B8054' }} />
+                      <div style={{ width: `${100 - pctGanha}%`, backgroundColor: 'var(--color-clay-700)' }} />
+                    </>
+                  );
+                })()}
+              </div>
+              <div className="flex justify-between mt-2 text-xs">
+                <span style={{ color: '#3B8054' }}>● Ganha ({data.conversao.ganhas})</span>
+                <span style={{ color: 'var(--color-clay-700)' }}>Perdida ({data.conversao.perdidas}) ●</span>
+              </div>
             </div>
           </div>
         </div>

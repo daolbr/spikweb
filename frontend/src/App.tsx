@@ -13,6 +13,7 @@ import Propostas from './pages/Propostas';
 import PropostaDetalhe from './pages/PropostaDetalhe';
 import Campanhas from './pages/Campanhas';
 import Projetos from './pages/Projetos';
+import ConfiguracaoCamposCustomizados from './pages/ConfiguracaoCamposCustomizados';
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ export default function App() {
               <Route path="/propostas/:id" element={<PropostaDetalhe />} />
               <Route path="/campanhas" element={<Campanhas />} />
               <Route path="/projetos" element={<Projetos />} />
+              <Route path="/configuracoes/campos" element={<ConfiguracaoCamposCustomizados />} />
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

@@ -32,6 +32,9 @@ export default function PropostaDetalhe() {
   const mudarStatus = useMutation({
     mutationFn: async (status: StatusProposta) => api.patch(`/propostas/${id}/status`, { status }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['proposta', id] }),
+    onError: (err: any) => {
+      alert(err?.response?.data?.message ?? 'Não foi possível mudar o status.');
+    },
   });
 
   const adicionarItem = useMutation({
@@ -43,12 +46,28 @@ export default function PropostaDetalhe() {
       queryClient.invalidateQueries({ queryKey: ['proposta', id] });
       setMostrarFormItem(false);
     },
+    onError: (err: any) => {
+      alert(err?.response?.data?.message ?? 'Não foi possível adicionar o item.');
+    },
   });
 
   const removerItem = useMutation({
     mutationFn: async (itemId: string) => api.delete(`/propostas/${id}/itens/${itemId}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['proposta', id] }),
+    onError: (err: any) => {
+      alert(err?.response?.data?.message ?? 'Não foi possível remover o item.');
+    },
   });
+
+  async function baixarPdf() {
+    const resposta = await api.get(`/propostas/${id}/pdf`, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([resposta.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `proposta-${id?.slice(0, 8)}.pdf`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  }
 
   function aoSubmeterItem(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -87,6 +106,16 @@ export default function PropostaDetalhe() {
             <option key={valor} value={valor}>{rotulo}</option>
           ))}
         </select>
+      </div>
+
+      <div className="flex justify-end mt-3">
+        <button
+          onClick={baixarPdf}
+          className="text-sm rounded-md px-3 py-1.5 font-medium border"
+          style={{ borderColor: 'var(--color-line)', color: 'var(--color-petrol-600)' }}
+        >
+          Baixar PDF
+        </button>
       </div>
 
       <div className="flex items-center justify-between mt-8 mb-3">

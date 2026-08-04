@@ -13,6 +13,10 @@ const ITENS_NAV = [
 
 export default function Layout() {
   const { usuario, sair } = useAuth();
+  const itensVisiveis =
+    usuario?.papel === 'ADMIN'
+      ? [...ITENS_NAV, { para: '/configuracoes/campos', rotulo: 'Campos customizados' }]
+      : ITENS_NAV;
 
   return (
     <div className="min-h-screen flex">
@@ -33,7 +37,7 @@ export default function Layout() {
         </div>
 
         <nav className="flex-1 px-3 space-y-0.5 mt-2">
-          {ITENS_NAV.map((item) => (
+          {itensVisiveis.map((item) => (
             <NavLink
               key={item.para}
               to={item.para}

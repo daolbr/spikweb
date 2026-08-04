@@ -17,12 +17,36 @@ function formatarMoeda(valor: number | string) {
   return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
+function diasNoEstagio(atualizadoEm: string) {
+  const dias = Math.floor((Date.now() - new Date(atualizadoEm).getTime()) / (1000 * 60 * 60 * 24));
+  return dias;
+}
+
+const ROTULO_ESTAGIO: Record<EstagioFunil, string> = {
+  PROSPECCAO: 'Prospecção',
+  QUALIFICACAO: 'Qualificação',
+  PROPOSTA: 'Proposta',
+  NEGOCIACAO: 'Negociação',
+  GANHA: 'Ganha',
+  PERDIDA: 'Perdida',
+};
+
+const COR_ESTAGIO: Record<EstagioFunil, string> = {
+  PROSPECCAO: 'var(--color-ink-soft)',
+  QUALIFICACAO: 'var(--color-petrol-400)',
+  PROPOSTA: 'var(--color-petrol-600)',
+  NEGOCIACAO: 'var(--color-clay-500)',
+  GANHA: '#3B8054',
+  PERDIDA: 'var(--color-clay-700)',
+};
+
 export default function Oportunidades() {
   const queryClient = useQueryClient();
   const [oportunidadeArrastada, setOportunidadeArrastada] = useState<string | null>(null);
   const [colunaAlvo, setColunaAlvo] = useState<EstagioFunil | null>(null);
   const [detalheId, setDetalheId] = useState<string | null>(null);
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [visualizacao, setVisualizacao] = useState<'kanban' | 'lista'>('kanban');
 
   const { data: funil, isLoading } = useQuery<FunilAgrupado>({
     queryKey: ['oportunidades', 'funil'],
@@ -45,13 +69,20 @@ export default function Oportunidades() {
     mutationFn: async ({ id, estagio }: { id: string; estagio: EstagioFunil }) => {
       const payload: { estagio: EstagioFunil; motivoPerda?: string } = { estagio };
       if (estagio === 'PERDIDA') {
-        const motivo = window.prompt('Motivo da perda (opcional):') ?? undefined;
-        if (motivo) payload.motivoPerda = motivo;
+        const motivo = window.prompt('Motivo da perda (obrigatório):');
+        if (!motivo?.trim()) {
+          throw new Error('CANCELADO_PELO_USUARIO');
+        }
+        payload.motivoPerda = motivo.trim();
       }
       const { data } = await api.patch(`/oportunidades/${id}/estagio`, payload);
       return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['oportunidades'] }),
+    onError: (err: any) => {
+      if (err?.message === 'CANCELADO_PELO_USUARIO') return;
+      alert(err?.response?.data?.message ?? 'Não foi possível mudar o estágio.');
+    },
   });
 
   const criarOportunidade = useMutation({
@@ -105,8 +136,71 @@ export default function Oportunidades() {
         </button>
       </div>
 
+      <div className="flex gap-1 mb-4">
+        {(['kanban', 'lista'] as const).map((v) => (
+          <button
+            key={v}
+            onClick={() => setVisualizacao(v)}
+            className="text-sm rounded-md px-3 py-1.5 font-medium transition capitalize"
+            style={{
+              backgroundColor: visualizacao === v ? 'var(--color-petrol-600)' : 'transparent',
+              color: visualizacao === v ? 'white' : 'var(--color-ink-soft)',
+            }}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+
       {isLoading ? (
         <p className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>Carregando…</p>
+      ) : visualizacao === 'lista' ? (
+        <div className="bg-white border rounded-lg overflow-hidden flex-1 overflow-y-auto" style={{ borderColor: 'var(--color-line)' }}>
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-white">
+              <tr className="border-b text-left" style={{ borderColor: 'var(--color-line)' }}>
+                <th className="px-4 py-3 font-medium" style={{ color: 'var(--color-ink-soft)' }}>Título</th>
+                <th className="px-4 py-3 font-medium" style={{ color: 'var(--color-ink-soft)' }}>Empresa</th>
+                <th className="px-4 py-3 font-medium" style={{ color: 'var(--color-ink-soft)' }}>Estágio</th>
+                <th className="px-4 py-3 font-medium text-right" style={{ color: 'var(--color-ink-soft)' }}>Valor</th>
+                <th className="px-4 py-3 font-medium text-right" style={{ color: 'var(--color-ink-soft)' }}>Dias no estágio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COLUNAS.flatMap((coluna) => (funil?.[coluna.estagio] ?? []).map((o) => ({ ...o, _cor: coluna.cor })))
+                .sort((a, b) => Number(b.valor) - Number(a.valor))
+                .map((oportunidade) => {
+                  const dias = diasNoEstagio(oportunidade.atualizadoEm);
+                  return (
+                    <tr
+                      key={oportunidade.id}
+                      onClick={() => setDetalheId(oportunidade.id)}
+                      className="border-b last:border-0 cursor-pointer hover:bg-black/[0.02] transition"
+                      style={{ borderColor: 'var(--color-line)' }}
+                    >
+                      <td className="px-4 py-3 font-medium text-ink">{oportunidade.titulo}</td>
+                      <td className="px-4 py-3" style={{ color: 'var(--color-ink-soft)' }}>{oportunidade.empresa?.nome}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="text-xs font-medium rounded-full px-2 py-0.5"
+                          style={{ backgroundColor: 'color-mix(in srgb, ' + COR_ESTAGIO[oportunidade.estagio] + ' 15%, white)', color: COR_ESTAGIO[oportunidade.estagio] }}
+                        >
+                          {ROTULO_ESTAGIO[oportunidade.estagio]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium text-ink">{formatarMoeda(oportunidade.valor)}</td>
+                      <td
+                        className="px-4 py-3 text-right"
+                        style={{ color: dias > 14 && oportunidade.estagio !== 'GANHA' && oportunidade.estagio !== 'PERDIDA' ? 'var(--color-clay-700)' : 'var(--color-ink-soft)' }}
+                      >
+                        {dias}d
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <div className="flex-1 min-h-0 flex gap-4 overflow-x-auto pb-4">
           {COLUNAS.map((coluna) => {

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import type { Oportunidade } from '../api/types';
+import CamposCustomizadosPainel from './CamposCustomizadosPainel';
 
 function formatarMoeda(valor: number | string) {
   return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -10,6 +11,15 @@ function formatarMoeda(valor: number | string) {
 function formatarData(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }
+
+const COR_ESTAGIO: Record<string, string> = {
+  PROSPECCAO: '#6B6960',
+  QUALIFICACAO: '#4A8A76',
+  PROPOSTA: '#2E7D67',
+  NEGOCIACAO: 'var(--color-clay-500)',
+  GANHA: '#3B8054',
+  PERDIDA: 'var(--color-clay-700)',
+};
 
 export default function OportunidadeDrawer({ id, onFechar }: { id: string; onFechar: () => void }) {
   const queryClient = useQueryClient();
@@ -76,9 +86,11 @@ export default function OportunidadeDrawer({ id, onFechar }: { id: string; onFec
               </div>
             )}
 
-            <h3 className="text-sm font-medium text-ink mb-2">Histórico de acompanhamento</h3>
+            <CamposCustomizadosPainel entidade="OPORTUNIDADE" entidadeId={oportunidade.id} />
 
-            <form onSubmit={aoSubmeter} className="mb-4">
+            <h3 className="text-sm font-medium text-ink mb-2">Registrar acompanhamento</h3>
+
+            <form onSubmit={aoSubmeter} className="mb-6">
               <textarea
                 value={anotacao}
                 onChange={(e) => setAnotacao(e.target.value)}
@@ -99,15 +111,36 @@ export default function OportunidadeDrawer({ id, onFechar }: { id: string; onFec
               </div>
             </form>
 
-            <div className="space-y-3">
-              {oportunidade.historico?.map((item) => (
-                <div key={item.id} className="border-l-2 pl-3" style={{ borderColor: 'var(--color-line)' }}>
-                  <p className="text-sm text-ink">{item.anotacao}</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-ink-soft)' }}>
-                    {formatarData(item.criadoEm)}
-                  </p>
-                </div>
-              ))}
+            <h3 className="text-sm font-medium text-ink mb-3">Linha do tempo — checkpoints</h3>
+
+            <div className="relative">
+              {oportunidade.historico?.map((item, i) => {
+                const ehUltimo = i === (oportunidade.historico?.length ?? 0) - 1;
+                const cor = item.estagioNoMomento ? COR_ESTAGIO[item.estagioNoMomento] ?? 'var(--color-ink-soft)' : 'var(--color-ink-soft)';
+                return (
+                  <div key={item.id} className="relative pl-6 pb-5">
+                    {!ehUltimo && (
+                      <div className="absolute left-[5px] top-3 bottom-0 w-px" style={{ backgroundColor: 'var(--color-line)' }} />
+                    )}
+                    <div
+                      className="absolute left-0 top-1 h-3 w-3 rounded-full border-2 border-white"
+                      style={{ backgroundColor: cor, boxShadow: '0 0 0 1px ' + cor }}
+                    />
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {item.estagioNoMomento && (
+                        <span
+                          className="text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5"
+                          style={{ backgroundColor: 'color-mix(in srgb, ' + cor + ' 15%, white)', color: cor }}
+                        >
+                          {item.estagioNoMomento}
+                        </span>
+                      )}
+                      <p className="text-xs" style={{ color: 'var(--color-ink-soft)' }}>{formatarData(item.criadoEm)}</p>
+                    </div>
+                    <p className="text-sm text-ink mt-1">{item.anotacao}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

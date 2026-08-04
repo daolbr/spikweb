@@ -3,9 +3,19 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import type { Contato, Empresa } from '../api/types';
+import CamposCustomizadosPainel from '../components/CamposCustomizadosPainel';
 
-const CAMPOS_EMPRESA: { chave: keyof Empresa; rotulo: string }[] = [
+const ROTULO_PORTE: Record<string, string> = {
+  MEI: 'MEI',
+  MICRO: 'Microempresa',
+  PEQUENA: 'Pequena empresa',
+  MEDIA: 'Média empresa',
+  GRANDE: 'Grande empresa',
+};
+
+const CAMPOS_EMPRESA: { chave: keyof Empresa; rotulo: string; formatar?: (v: unknown) => string }[] = [
   { chave: 'cnpj', rotulo: 'CNPJ' },
+  { chave: 'porte', rotulo: 'Porte', formatar: (v) => ROTULO_PORTE[v as string] ?? '' },
   { chave: 'segmento', rotulo: 'Segmento' },
   { chave: 'cidade', rotulo: 'Cidade' },
   { chave: 'uf', rotulo: 'UF' },
@@ -98,15 +108,19 @@ export default function EmpresaDetalhe() {
         className="bg-white border rounded-lg p-5 grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8"
         style={{ borderColor: 'var(--color-line)' }}
       >
-        {CAMPOS_EMPRESA.map(({ chave, rotulo }) => (
+        {CAMPOS_EMPRESA.map(({ chave, rotulo, formatar }) => (
           <div key={chave}>
             <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--color-ink-soft)' }}>
               {rotulo}
             </p>
-            <p className="text-sm text-ink">{(empresa[chave] as string) || '—'}</p>
+            <p className="text-sm text-ink">
+              {formatar ? formatar(empresa[chave]) || '—' : (empresa[chave] as string) || '—'}
+            </p>
           </div>
         ))}
       </div>
+
+      <CamposCustomizadosPainel entidade="EMPRESA" entidadeId={empresa.id} />
 
       <div className="flex items-center justify-between mb-3">
         <h2 style={{ fontFamily: 'var(--font-display)' }} className="text-lg font-semibold text-ink">
