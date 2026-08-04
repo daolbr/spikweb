@@ -28,7 +28,7 @@ export class CampoCustomizado {
   tipo: TipoCampoCustomizado;
 
   // Para tipo=LISTA: opções separadas por vírgula (ex.: "Frio,Morno,Quente")
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, name: 'opcoes_lista' })
   opcoesLista: string | null;
 
   @Column({ default: false })
