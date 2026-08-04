@@ -91,13 +91,48 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-8">
-        <Cartao rotulo="Pipeline ativo" valor={formatarMoeda(data.pipeline.valorAtivo)} corDestaque="var(--color-petrol-600)" />
-        <Cartao
-          rotulo="Taxa de conversão"
-          valor={data.conversao.taxa !== null ? `${(data.conversao.taxa * 100).toFixed(0)}%` : '—'}
+      {/* Card de destaque: marinho + mancha de brilho, no padrão decorativo da marca */}
+      <div
+        className="rounded-2xl p-7 mb-6 relative overflow-hidden text-white"
+        style={{ backgroundColor: 'var(--color-ink)' }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            width: 460, height: 460, right: -160, top: -200,
+            background: 'radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--color-green-forte) 55%, transparent), color-mix(in srgb, var(--color-petrol-600) 25%, transparent) 45%, transparent 72%)',
+            filter: 'blur(30px)',
+          }}
         />
-        <Cartao rotulo="Atividades pendentes" valor={String(data.atividades.pendentes)} corDestaque={data.atividades.atrasadas > 0 ? 'var(--color-clay-700)' : undefined} />
+        <div className="relative">
+          <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.65)' }}>Pipeline ativo</p>
+          <p className="text-4xl font-extrabold mt-1" style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+            {formatarMoeda(data.pipeline.valorAtivo)}
+          </p>
+          <div className="flex gap-9 mt-4">
+            <div>
+              <p className="text-lg font-bold">{data.pipeline.quantidadeAtiva}</p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>oportunidades</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold">{data.conversao.taxa !== null ? `${(data.conversao.taxa * 100).toFixed(0)}%` : '—'}</p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>conversão</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold">{data.atividades.pendentes}</p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>atividades pendentes</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-8">
+        <Cartao rotulo="Ganhas" valor={String(data.conversao.ganhas)} corDestaque="var(--color-petrol-600)" />
+        <Cartao
+          rotulo="Perdidas"
+          valor={String(data.conversao.perdidas)}
+        />
+        <Cartao rotulo="Atividades atrasadas" valor={String(data.atividades.atrasadas)} corDestaque={data.atividades.atrasadas > 0 ? 'var(--color-clay-700)' : undefined} />
       </div>
 
       <div className="bg-white border rounded-lg p-5 mb-6" style={{ borderColor: 'var(--color-line)' }}>

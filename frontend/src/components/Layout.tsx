@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import DotGridLogo from './DotGridLogo';
 
 const ITENS_NAV = [
   { para: '/dashboard', rotulo: 'Indicadores' },
@@ -20,30 +21,35 @@ export default function Layout() {
   return (
     <div className="min-h-screen flex">
       <aside
-        className="w-56 shrink-0 border-r flex flex-col"
-        style={{ borderColor: 'var(--color-line)' }}
+        className="w-56 shrink-0 flex flex-col relative overflow-hidden"
+        style={{ backgroundColor: 'var(--color-ink)' }}
       >
-        <div className="px-5 py-5 flex items-center gap-2.5">
-          <div
-            className="h-8 w-8 rounded-md flex items-center justify-center text-white text-sm font-semibold"
-            style={{ backgroundColor: 'var(--color-petrol-600)', fontFamily: 'var(--font-display)' }}
-          >
-            S
-          </div>
-          <span style={{ fontFamily: 'var(--font-display)' }} className="font-semibold text-ink">
+        {/* Mancha de brilho difusa, no mesmo padrão decorativo do material da marca */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            width: 320, height: 320, left: -110, bottom: -130,
+            background: 'radial-gradient(circle at 40% 40%, color-mix(in srgb, var(--color-green-forte) 35%, transparent), color-mix(in srgb, var(--color-green-medio) 14%, transparent) 45%, transparent 72%)',
+            filter: 'blur(18px)',
+          }}
+        />
+
+        <div className="relative px-5 py-5 flex items-center gap-2.5">
+          <DotGridLogo />
+          <span style={{ fontFamily: 'var(--font-display)' }} className="font-bold text-white">
             Spik CRM
           </span>
         </div>
 
-        <nav className="flex-1 px-3 space-y-0.5 mt-2">
+        <nav className="relative flex-1 px-3 space-y-0.5 mt-2">
           {itensVisiveis.map((item) => (
             <NavLink
               key={item.para}
               to={item.para}
-              className="block rounded-md px-3 py-2 text-sm font-medium transition hover:bg-black/5"
+              className="block rounded-md px-3 py-2 text-sm font-medium transition"
               style={({ isActive }) => ({
                 backgroundColor: isActive ? 'var(--color-petrol-600)' : 'transparent',
-                color: isActive ? 'white' : 'var(--color-ink)',
+                color: isActive ? 'white' : 'rgba(255,255,255,0.68)',
               })}
             >
               {item.rotulo}
@@ -51,17 +57,17 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="px-3 pb-4 pt-2 border-t" style={{ borderColor: 'var(--color-line)' }}>
+        <div className="relative px-3 pb-4 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
           <div className="px-3 py-2">
-            <p className="text-sm font-medium text-ink truncate">{usuario?.nome}</p>
-            <p className="text-xs truncate" style={{ color: 'var(--color-ink-soft)' }}>
+            <p className="text-sm font-medium text-white truncate">{usuario?.nome}</p>
+            <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.55)' }}>
               {usuario?.papel}
             </p>
           </div>
           <button
             onClick={sair}
-            className="w-full text-left rounded-md px-3 py-2 text-sm hover:bg-black/5 transition"
-            style={{ color: 'var(--color-ink-soft)' }}
+            className="w-full text-left rounded-md px-3 py-2 text-sm transition hover:bg-white/5"
+            style={{ color: 'rgba(255,255,255,0.68)' }}
           >
             Sair
           </button>

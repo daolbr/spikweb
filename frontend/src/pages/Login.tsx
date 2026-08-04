@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import DotGridLogo from '../components/DotGridLogo';
 
 export default function Login() {
   const { entrar } = useAuth();
@@ -29,14 +30,14 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="mb-10 text-center">
           <div
-            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-paper mb-4"
-            style={{ backgroundColor: 'var(--color-petrol-600)' }}
+            className="inline-flex h-14 w-14 items-center justify-center rounded-2xl mb-4"
+            style={{ backgroundColor: 'var(--color-ink)' }}
           >
-            <span style={{ fontFamily: 'var(--font-display)' }} className="text-lg font-semibold">S</span>
+            <DotGridLogo size={5} gap={4} />
           </div>
           <h1
             style={{ fontFamily: 'var(--font-display)' }}
-            className="text-2xl font-semibold text-ink"
+            className="text-2xl font-bold text-ink"
           >
             Spik CRM
           </h1>
