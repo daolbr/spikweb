@@ -11,6 +11,14 @@ import { Contato } from '../contatos/contato.entity';
 // Corresponde à antiga SPM_EMPRESA do sistema legado (VB6).
 // Entidade raiz do modelo de dados: contatos, oportunidades, propostas
 // e atividades são todas filhas de uma empresa.
+export enum PorteEmpresa {
+  MEI = 'MEI',
+  MICRO = 'MICRO',
+  PEQUENA = 'PEQUENA',
+  MEDIA = 'MEDIA',
+  GRANDE = 'GRANDE',
+}
+
 @Entity('empresas')
 export class Empresa {
   @PrimaryGeneratedColumn('uuid')
@@ -24,6 +32,9 @@ export class Empresa {
 
   @Column({ length: 80, nullable: true })
   segmento: string | null;
+
+  @Column({ type: 'enum', enum: PorteEmpresa, nullable: true })
+  porte: PorteEmpresa | null;
 
   @Column({ length: 80, nullable: true })
   cidade: string | null;

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Oportunidade } from './oportunidade.entity';
@@ -68,6 +68,20 @@ export class OportunidadesService {
   async mudarEstagio(id: string, dto: MudarEstagioDto): Promise<Oportunidade> {
     const oportunidade = await this.buscarPorId(id);
     const estagioAnterior = oportunidade.estagio;
+
+    if (dto.estagio === EstagioFunil.PERDIDA && !dto.motivoPerda?.trim()) {
+      throw new BadRequestException(
+        'Informe o motivo da perda ao marcar uma oportunidade como perdida — isso alimenta os indicadores de causa de perda.',
+      );
+    }
+    if (
+      (estagioAnterior === EstagioFunil.GANHA || estagioAnterior === EstagioFunil.PERDIDA) &&
+      dto.estagio !== estagioAnterior
+    ) {
+      throw new BadRequestException(
+        'Esta oportunidade já está fechada (ganha ou perdida) e não pode mudar de estágio. Crie uma nova oportunidade se for o caso.',
+      );
+    }
 
     oportunidade.estagio = dto.estagio;
     if (dto.estagio === EstagioFunil.PERDIDA && dto.motivoPerda) {

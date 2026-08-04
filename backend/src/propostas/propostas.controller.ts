@@ -7,9 +7,12 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { PropostasService } from './propostas.service';
+import { PropostaPdfService } from './proposta-pdf.service';
 import {
   CriarPropostaDto,
   AtualizarPropostaDto,
@@ -21,7 +24,10 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 @Controller('propostas')
 export class PropostasController {
-  constructor(private readonly propostasService: PropostasService) {}
+  constructor(
+    private readonly propostasService: PropostasService,
+    private readonly propostaPdfService: PropostaPdfService,
+  ) {}
 
   @Get()
   listar(@Query('empresaId') empresaId?: string) {
@@ -31,6 +37,18 @@ export class PropostasController {
   @Get(':id')
   buscarPorId(@Param('id') id: string) {
     return this.propostasService.buscarPorId(id);
+  }
+
+  @Get(':id/pdf')
+  async baixarPdf(@Param('id') id: string, @Res() res: Response) {
+    const proposta = await this.propostasService.buscarPorId(id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="proposta-${proposta.id.slice(0, 8)}.pdf"`,
+    );
+    const doc = this.propostaPdfService.gerar(proposta);
+    doc.pipe(res);
   }
 
   @Post()

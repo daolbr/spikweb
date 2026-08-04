@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Proposta } from './proposta.entity';
@@ -49,17 +49,33 @@ export class PropostasService {
 
   async mudarStatus(id: string, dto: MudarStatusPropostaDto): Promise<Proposta> {
     const proposta = await this.buscarPorId(id);
+    if (dto.status === 'APROVADA' && (!proposta.itens || proposta.itens.length === 0)) {
+      throw new BadRequestException(
+        'Não é possível aprovar uma proposta sem itens. Adicione ao menos um item antes de aprovar.',
+      );
+    }
     proposta.status = dto.status;
     return this.propostasRepo.save(proposta);
   }
 
   async adicionarItem(propostaId: string, dto: CriarItemPropostaDto): Promise<Proposta> {
-    await this.buscarPorId(propostaId); // garante que a proposta existe
+    const proposta = await this.buscarPorId(propostaId);
+    if (proposta.status === 'APROVADA' || proposta.status === 'RECUSADA') {
+      throw new BadRequestException(
+        'Não é possível alterar itens de uma proposta já aprovada ou recusada.',
+      );
+    }
     await this.itensRepo.save(this.itensRepo.create({ ...dto, propostaId }));
     return this.recalcularTotal(propostaId);
   }
 
   async removerItem(propostaId: string, itemId: string): Promise<Proposta> {
+    const proposta = await this.buscarPorId(propostaId);
+    if (proposta.status === 'APROVADA' || proposta.status === 'RECUSADA') {
+      throw new BadRequestException(
+        'Não é possível alterar itens de uma proposta já aprovada ou recusada.',
+      );
+    }
     const resultado = await this.itensRepo.delete({ id: itemId, propostaId });
     if (resultado.affected === 0) throw new NotFoundException('Item não encontrado.');
     return this.recalcularTotal(propostaId);

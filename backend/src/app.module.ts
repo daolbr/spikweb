@@ -11,6 +11,7 @@ import { PropostasModule } from './propostas/propostas.module';
 import { CampanhasModule } from './campanhas/campanhas.module';
 import { ProjetosModule } from './projetos/projetos.module';
 import { IndicadoresModule } from './indicadores/indicadores.module';
+import { CamposCustomizadosModule } from './campos-customizados/campos-customizados.module';
 import { Usuario } from './usuarios/usuario.entity';
 import { Empresa } from './empresas/empresa.entity';
 import { Contato } from './contatos/contato.entity';
@@ -21,6 +22,9 @@ import { Proposta } from './propostas/proposta.entity';
 import { ItemProposta } from './propostas/item-proposta.entity';
 import { Campanha } from './campanhas/campanha.entity';
 import { Projeto } from './projetos/projeto.entity';
+import { CampoCustomizado } from './campos-customizados/campo-customizado.entity';
+import { PermissaoCampo } from './campos-customizados/permissao-campo.entity';
+import { ValorCampoCustomizado } from './campos-customizados/valor-campo-customizado.entity';
 
 @Module({
   imports: [
@@ -42,13 +46,14 @@ import { Projeto } from './projetos/projeto.entity';
           ItemProposta,
           Campanha,
           Projeto,
+          CampoCustomizado,
+          PermissaoCampo,
+          ValorCampoCustomizado,
         ],
-        // O Supabase (como a maioria dos Postgres gerenciados) exige SSL.
-        ssl: config.get<string>('DB_SSL') === 'false' ? false : { rejectUnauthorized: false },
-        // Em produção, synchronize fica desligado por padrão — rode a
-        // sincronização uma vez manualmente (ver DEPLOY.md) e depois
-        // trate mudanças de schema via migration, não em cada boot.
+        // synchronize=true é aceitável em desenvolvimento inicial deste MVP.
+        // Antes de produção, trocar para migrations versionadas do TypeORM.
         synchronize: config.get<string>('DB_SYNCHRONIZE') === 'true',
+        ssl: config.get<string>('DB_SSL') === 'false' ? false : { rejectUnauthorized: false },
         logging: false,
       }),
     }),
@@ -62,6 +67,7 @@ import { Projeto } from './projetos/projeto.entity';
     CampanhasModule,
     ProjetosModule,
     IndicadoresModule,
+    CamposCustomizadosModule,
   ],
 })
 export class AppModule {}
