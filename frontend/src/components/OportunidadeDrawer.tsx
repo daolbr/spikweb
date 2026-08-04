@@ -18,15 +18,15 @@ function formatarDataCurta(data: string | null) {
 }
 
 const COR_ESTAGIO: Record<string, string> = {
-  PROSPECCAO: '#6B6960',
-  QUALIFICACAO: '#4A8A76',
-  PROPOSTA: '#2E7D67',
-  NEGOCIACAO: 'var(--color-clay-500)',
-  GANHA: '#3B8054',
+  PROSPECCAO: 'var(--color-ink-soft)',
+  QUALIFICACAO: 'var(--color-petrol-400)',
+  PROPOSTA: 'var(--color-petrol-600)',
+  NEGOCIACAO: '#5B8C00',
+  GANHA: 'var(--color-green-texto)',
   PERDIDA: 'var(--color-clay-700)',
 };
 
-const COR_CLASSE: Record<string, string> = { A: '#3B8054', B: 'var(--color-clay-500)', C: 'var(--color-ink-soft)' };
+const COR_CLASSE: Record<string, string> = { A: 'var(--color-green-texto)', B: 'var(--color-petrol-600)', C: 'var(--color-ink-soft)' };
 
 function IconeArquivo() {
   return (

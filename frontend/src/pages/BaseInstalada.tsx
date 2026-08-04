@@ -71,6 +71,21 @@ export default function BaseInstalada() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['base-instalada'] }),
   });
 
+  const gerarRenovacoes = useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post('/automacoes/gerar-renovacoes');
+      return data;
+    },
+    onSuccess: (data: { geradas: number }) => {
+      queryClient.invalidateQueries({ queryKey: ['base-instalada'] });
+      alert(
+        data.geradas > 0
+          ? `${data.geradas} oportunidade${data.geradas === 1 ? '' : 's'} de renovação gerada${data.geradas === 1 ? '' : 's'}.`
+          : 'Nenhuma renovação pendente no momento.',
+      );
+    },
+  });
+
   function aoSubmeter(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
@@ -101,13 +116,23 @@ export default function BaseInstalada() {
             Produtos e serviços vendidos aos clientes, com datas de renovação
           </p>
         </div>
-        <button
-          onClick={() => setMostrarForm(true)}
-          className="rounded-md px-4 py-2 text-sm font-medium text-white"
-          style={{ backgroundColor: 'var(--color-petrol-600)' }}
-        >
-          Novo item
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => gerarRenovacoes.mutate()}
+            disabled={gerarRenovacoes.isPending}
+            className="rounded-md px-4 py-2 text-sm font-medium border disabled:opacity-60"
+            style={{ borderColor: 'var(--color-line)', color: 'var(--color-petrol-600)' }}
+          >
+            {gerarRenovacoes.isPending ? 'Gerando…' : 'Gerar renovações agora'}
+          </button>
+          <button
+            onClick={() => setMostrarForm(true)}
+            className="rounded-md px-4 py-2 text-sm font-medium text-white"
+            style={{ backgroundColor: 'var(--color-petrol-600)' }}
+          >
+            Novo item
+          </button>
+        </div>
       </div>
 
       <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: 'var(--color-line)' }}>

@@ -16,7 +16,7 @@ function formatarMoeda(valor: number) {
 }
 
 const ESTAGIOS_ATIVOS: EstagioFunil[] = ['PROSPECCAO', 'QUALIFICACAO', 'PROPOSTA', 'NEGOCIACAO'];
-const COR_FUNIL = ['#6B6960', '#4A8A76', '#2E7D67', '#17594A'];
+const COR_FUNIL = ['#6B7280', '#3E85BB', '#1A68A5', '#4C9E00'];
 
 function FunilChart({ porEstagio }: { porEstagio: ResumoIndicadores['pipeline']['porEstagio'] }) {
   const largura = 640;
@@ -120,14 +120,14 @@ export default function Dashboard() {
                   const pctGanha = (data.conversao.ganhas / total) * 100;
                   return (
                     <>
-                      <div style={{ width: `${pctGanha}%`, backgroundColor: '#3B8054' }} />
+                      <div style={{ width: `${pctGanha}%`, backgroundColor: 'var(--color-green-texto)' }} />
                       <div style={{ width: `${100 - pctGanha}%`, backgroundColor: 'var(--color-clay-700)' }} />
                     </>
                   );
                 })()}
               </div>
               <div className="flex justify-between mt-2 text-xs">
-                <span style={{ color: '#3B8054' }}>● Ganha ({data.conversao.ganhas})</span>
+                <span style={{ color: 'var(--color-green-texto)' }}>● Ganha ({data.conversao.ganhas})</span>
                 <span style={{ color: 'var(--color-clay-700)' }}>Perdida ({data.conversao.perdidas}) ●</span>
               </div>
             </div>

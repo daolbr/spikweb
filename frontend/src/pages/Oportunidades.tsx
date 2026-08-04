@@ -8,12 +8,12 @@ const COLUNAS: { estagio: EstagioFunil; titulo: string; cor: string }[] = [
   { estagio: 'PROSPECCAO', titulo: 'Prospecção', cor: 'var(--color-ink-soft)' },
   { estagio: 'QUALIFICACAO', titulo: 'Qualificação', cor: 'var(--color-petrol-400)' },
   { estagio: 'PROPOSTA', titulo: 'Proposta', cor: 'var(--color-petrol-600)' },
-  { estagio: 'NEGOCIACAO', titulo: 'Negociação', cor: 'var(--color-clay-500)' },
-  { estagio: 'GANHA', titulo: 'Ganha', cor: '#3B8054' },
+  { estagio: 'NEGOCIACAO', titulo: 'Negociação', cor: '#5B8C00' },
+  { estagio: 'GANHA', titulo: 'Ganha', cor: 'var(--color-green-texto)' },
   { estagio: 'PERDIDA', titulo: 'Perdida', cor: 'var(--color-clay-700)' },
 ];
 
-const COR_CLASSE: Record<string, string> = { A: '#3B8054', B: 'var(--color-clay-500)', C: 'var(--color-ink-soft)' };
+const COR_CLASSE: Record<string, string> = { A: 'var(--color-green-texto)', B: 'var(--color-petrol-600)', C: 'var(--color-ink-soft)' };
 
 function formatarMoeda(valor: number | string) {
   return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
@@ -36,8 +36,8 @@ const COR_ESTAGIO: Record<EstagioFunil, string> = {
   PROSPECCAO: 'var(--color-ink-soft)',
   QUALIFICACAO: 'var(--color-petrol-400)',
   PROPOSTA: 'var(--color-petrol-600)',
-  NEGOCIACAO: 'var(--color-clay-500)',
-  GANHA: '#3B8054',
+  NEGOCIACAO: '#5B8C00',
+  GANHA: 'var(--color-green-texto)',
   PERDIDA: 'var(--color-clay-700)',
 };
 
