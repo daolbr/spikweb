@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import * as PDFDocument from 'pdfkit';
-// A sintaxe acima cobre a interop CJS/ESM da lib pdfkit sem exigir
-// esModuleInterop no tsconfig do projeto.
+import PDFDocument = require('pdfkit');
+// Sintaxe específica do TypeScript para interop CJS sem depender da flag
+// esModuleInterop — funciona tanto no build local (nest build) quanto no
+// bundler de função serverless do Vercel, que usa configuração própria.
 import { Proposta } from './proposta.entity';
 
 function formatarMoeda(valor: number | string) {
