@@ -4,5 +4,8 @@
       "includeFiles": "node_modules/pg/**"
     }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
+  "crons": [
+    { "path": "/api/automacoes/cron/gerar-renovacoes", "schedule": "0 6 * * *" }
+  ]
 }
