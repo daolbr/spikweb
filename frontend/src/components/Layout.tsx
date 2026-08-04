@@ -7,6 +7,7 @@ const ITENS_NAV = [
   { para: '/agenda', rotulo: 'Agenda' },
   { para: '/empresas', rotulo: 'Empresas' },
   { para: '/base-instalada', rotulo: 'Base instalada' },
+  { para: '/perfil-cliente', rotulo: 'Perfil ideal' },
 ];
 
 export default function Layout() {

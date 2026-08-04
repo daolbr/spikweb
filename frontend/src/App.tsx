@@ -10,6 +10,7 @@ import EmpresaDetalhe from './pages/EmpresaDetalhe';
 import Oportunidades from './pages/Oportunidades';
 import Agenda from './pages/Agenda';
 import BaseInstalada from './pages/BaseInstalada';
+import PerfilCliente from './pages/PerfilCliente';
 import ConfiguracaoCamposCustomizados from './pages/ConfiguracaoCamposCustomizados';
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="/oportunidades" element={<Oportunidades />} />
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/base-instalada" element={<BaseInstalada />} />
+              <Route path="/perfil-cliente" element={<PerfilCliente />} />
               <Route path="/configuracoes/campos" element={<ConfiguracaoCamposCustomizados />} />
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

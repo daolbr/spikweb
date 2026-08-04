@@ -87,7 +87,7 @@ export interface Oportunidade {
 
 export type FunilAgrupado = Record<EstagioFunil, Oportunidade[]>;
 
-export type TipoAtividade = 'LIGACAO' | 'REUNIAO' | 'EMAIL' | 'VISITA' | 'TAREFA';
+export type TipoAtividade = 'LIGACAO' | 'REUNIAO' | 'EMAIL' | 'VISITA' | 'TAREFA' | 'PROSPECCAO' | 'FIDELIZACAO';
 export type StatusAtividade = 'PENDENTE' | 'CONCLUIDA' | 'CANCELADA';
 
 export interface Atividade {
@@ -178,4 +178,22 @@ export interface BaseInstaladaItem {
   valor: number | string | null;
   observacoes: string | null;
   criadoEm: string;
+}
+
+export interface RankingAtributo {
+  valor: string;
+  vitorias: number;
+  valorTotal: number;
+}
+
+export interface PerfilIdeal {
+  porPorte: RankingAtributo[];
+  porSegmento: RankingAtributo[];
+  porUf: RankingAtributo[];
+}
+
+export interface ProspectSugerido {
+  empresa: Empresa;
+  pontuacao: number;
+  atributosCompativeis: string[];
 }

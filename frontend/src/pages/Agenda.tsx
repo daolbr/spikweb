@@ -9,6 +9,8 @@ const ROTULOS_TIPO: Record<TipoAtividade, string> = {
   EMAIL: 'E-mail',
   VISITA: 'Visita',
   TAREFA: 'Tarefa',
+  PROSPECCAO: 'Prospecção',
+  FIDELIZACAO: 'Fidelização',
 };
 
 const FILTROS = ['PENDENTE', 'CONCLUIDA', 'TODAS'] as const;
@@ -123,7 +125,7 @@ export default function Agenda() {
   const queryClient = useQueryClient();
   const [filtro, setFiltro] = useState<Filtro>('PENDENTE');
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [visualizacao, setVisualizacao] = useState<'lista' | 'calendario'>('lista');
+  const [visualizacao, setVisualizacao] = useState<'lista' | 'calendario' | 'priorizada'>('lista');
 
   const { data: atividades, isLoading } = useQuery<Atividade[]>({
     queryKey: ['atividades'],
@@ -131,6 +133,16 @@ export default function Agenda() {
       const { data } = await api.get('/atividades');
       return data;
     },
+    enabled: visualizacao !== 'priorizada',
+  });
+
+  const { data: priorizadas, isLoading: carregandoPriorizadas } = useQuery<Atividade[]>({
+    queryKey: ['atividades', 'priorizadas'],
+    queryFn: async () => {
+      const { data } = await api.get('/atividades/priorizadas');
+      return data;
+    },
+    enabled: visualizacao === 'priorizada',
   });
 
   const { data: empresas } = useQuery<ListaEmpresas>({
@@ -144,7 +156,9 @@ export default function Agenda() {
 
   const concluir = useMutation({
     mutationFn: async (id: string) => api.patch(`/atividades/${id}/concluir`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['atividades'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['atividades'] });
+    },
   });
 
   const criar = useMutation({
@@ -220,7 +234,7 @@ export default function Agenda() {
           ))}
         </div>
         <div className="flex gap-1">
-          {(['lista', 'calendario'] as const).map((v) => (
+          {(['lista', 'calendario', 'priorizada'] as const).map((v) => (
             <button
               key={v}
               onClick={() => setVisualizacao(v)}
@@ -236,7 +250,53 @@ export default function Agenda() {
         </div>
       </div>
 
-      {isLoading ? (
+      {visualizacao === 'priorizada' ? (
+        carregandoPriorizadas ? (
+          <p className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>Carregando…</p>
+        ) : (
+          <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: 'var(--color-line)' }}>
+            <div className="px-4 py-2.5 border-b text-xs" style={{ borderColor: 'var(--color-line)', color: 'var(--color-ink-soft)' }}>
+              Ordenado por avanço no funil — negócios em negociação primeiro, prospecção por último
+            </div>
+            {priorizadas?.length === 0 ? (
+              <div className="p-10 text-center">
+                <p className="text-sm font-medium text-ink">Nenhuma atividade pendente</p>
+              </div>
+            ) : (
+              <div className="divide-y" style={{ borderColor: 'var(--color-line)' }}>
+                {priorizadas?.map((atividade) => (
+                  <div key={atividade.id} className="flex items-center gap-3 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      disabled={concluir.isPending}
+                      onChange={() => concluir.mutate(atividade.id)}
+                      className="h-4 w-4 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-ink truncate">{atividade.titulo}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--color-ink-soft)' }}>
+                        {atividade.empresa?.nome}
+                        {atividade.oportunidade ? ` · ${atividade.oportunidade.titulo}` : ''}
+                      </p>
+                    </div>
+                    {atividade.oportunidade && (
+                      <span
+                        className="text-xs font-medium rounded-full px-2 py-0.5 shrink-0"
+                        style={{ backgroundColor: 'var(--color-petrol-50)', color: 'var(--color-petrol-600)' }}
+                      >
+                        {atividade.oportunidade.estagio}
+                      </span>
+                    )}
+                    <span className="text-xs shrink-0" style={{ color: 'var(--color-ink-soft)' }}>
+                      {formatarHora(atividade.dataInicio)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      ) : isLoading ? (
         <p className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>Carregando…</p>
       ) : visualizacao === 'calendario' ? (
         <CalendarioMensal atividades={filtradas} onSelecionarDia={(a) => a.status === 'PENDENTE' && concluir.mutate(a.id)} />
