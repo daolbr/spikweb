@@ -172,7 +172,7 @@ export default function Oportunidades() {
       <div className="flex items-start justify-between mb-4">
         <div>
           <h1 style={{ fontFamily: 'var(--font-display)' }} className="text-2xl font-semibold text-ink">
-            Funil de vendas
+            Negócios
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--color-ink-soft)' }}>
             Arraste os cartões entre as colunas para mudar o estágio
