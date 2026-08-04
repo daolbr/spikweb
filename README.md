@@ -65,11 +65,10 @@ Depois faça login normalmente pela tela em `/login`. Você cai direto no Dashbo
 - **Contatos**: listar por empresa, buscar por id, criar, atualizar, remover
 - **Oportunidades / Funil de vendas**: CRUD completo, endpoint `/oportunidades/funil` agrupado por estágio (pronto para Kanban), mudança de estágio com log automático de histórico, anotações manuais de acompanhamento
 - **Atividades / Agenda**: CRUD, vínculo opcional com contato e oportunidade, marcar como concluída/cancelada, filtro por empresa e por intervalo de datas
-- **Propostas / Itens**: CRUD de propostas, itens com recálculo automático do valor total, mudança de status (rascunho → enviada → aprovada/recusada)
-- **Campanhas**: CRUD simples com orçamento e status
-- **Projetos**: CRUD simples vinculado a empresa, com status
+- **Base Instalada**: registro de produtos/serviços vendidos ao cliente, data de venda/renovação e link para a oportunidade de origem
+- **Anexo de proposta comercial**: upload/download de arquivo direto na oportunidade, guardado no Postgres
 - **Indicadores (BI)**: endpoint `/indicadores/resumo` agregando valor de pipeline por estágio, taxa de conversão, atividades pendentes/atrasadas e receita aprovada — tudo calculado com queries reais, não hardcoded
-- **Frontend**: login · **Dashboard de indicadores** · **Kanban do funil de vendas com drag-and-drop** · **Agenda** agrupada por dia · Empresas com CRUD de contatos · **Propostas com gestão de itens e total recalculado ao vivo** · Campanhas · Projetos
+- **Frontend**: login · **Dashboard de indicadores** · **Kanban do funil de vendas com drag-and-drop** · **Agenda** agrupada por dia · Empresas com CRUD de contatos · **Base Instalada** · **Agenda com visão de Calendário mensal** · **Empresas editáveis**
 
 ## Estrutura de pastas
 
@@ -93,7 +92,7 @@ frontend/
     auth/           # contexto de autenticação + rota protegida
     components/     # layout com navegação lateral, drawer de detalhe da oportunidade
     pages/          # Dashboard, Login, Empresas, EmpresaDetalhe, Oportunidades (Kanban),
-                     # Agenda, Propostas, PropostaDetalhe, Campanhas, Projetos
+                     # Agenda, BaseInstalada
 ```
 
 ## Pendências antes de produção

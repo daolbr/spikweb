@@ -7,24 +7,19 @@ import { EmpresasModule } from './empresas/empresas.module';
 import { ContatosModule } from './contatos/contatos.module';
 import { OportunidadesModule } from './oportunidades/oportunidades.module';
 import { AtividadesModule } from './atividades/atividades.module';
-import { PropostasModule } from './propostas/propostas.module';
-import { CampanhasModule } from './campanhas/campanhas.module';
-import { ProjetosModule } from './projetos/projetos.module';
 import { IndicadoresModule } from './indicadores/indicadores.module';
 import { CamposCustomizadosModule } from './campos-customizados/campos-customizados.module';
+import { BaseInstaladaModule } from './base-instalada/base-instalada.module';
 import { Usuario } from './usuarios/usuario.entity';
 import { Empresa } from './empresas/empresa.entity';
 import { Contato } from './contatos/contato.entity';
 import { Oportunidade } from './oportunidades/oportunidade.entity';
 import { HistoricoOportunidade } from './oportunidades/historico-oportunidade.entity';
 import { Atividade } from './atividades/atividade.entity';
-import { Proposta } from './propostas/proposta.entity';
-import { ItemProposta } from './propostas/item-proposta.entity';
-import { Campanha } from './campanhas/campanha.entity';
-import { Projeto } from './projetos/projeto.entity';
 import { CampoCustomizado } from './campos-customizados/campo-customizado.entity';
 import { PermissaoCampo } from './campos-customizados/permissao-campo.entity';
 import { ValorCampoCustomizado } from './campos-customizados/valor-campo-customizado.entity';
+import { BaseInstalada } from './base-instalada/base-instalada.entity';
 
 @Module({
   imports: [
@@ -42,13 +37,10 @@ import { ValorCampoCustomizado } from './campos-customizados/valor-campo-customi
           Oportunidade,
           HistoricoOportunidade,
           Atividade,
-          Proposta,
-          ItemProposta,
-          Campanha,
-          Projeto,
           CampoCustomizado,
           PermissaoCampo,
           ValorCampoCustomizado,
+          BaseInstalada,
         ],
         // synchronize=true é aceitável em desenvolvimento inicial deste MVP.
         // Antes de produção, trocar para migrations versionadas do TypeORM.
@@ -63,11 +55,9 @@ import { ValorCampoCustomizado } from './campos-customizados/valor-campo-customi
     ContatosModule,
     OportunidadesModule,
     AtividadesModule,
-    PropostasModule,
-    CampanhasModule,
-    ProjetosModule,
     IndicadoresModule,
     CamposCustomizadosModule,
+    BaseInstaladaModule,
   ],
 })
 export class AppModule {}

@@ -162,6 +162,37 @@ export class OportunidadesService {
     }
   }
 
+  async anexarProposta(id: string, arquivo: Express.Multer.File): Promise<Oportunidade> {
+    const oportunidade = await this.buscarPorId(id);
+    oportunidade.propostaArquivo = arquivo.buffer;
+    oportunidade.propostaArquivoNome = arquivo.originalname;
+    oportunidade.propostaArquivoTipo = arquivo.mimetype;
+    return this.oportunidadesRepo.save(oportunidade);
+  }
+
+  async baixarProposta(id: string): Promise<{ arquivo: Buffer; nome: string; tipo: string }> {
+    const oportunidade = await this.oportunidadesRepo.findOne({
+      where: { id },
+      select: { id: true, propostaArquivo: true, propostaArquivoNome: true, propostaArquivoTipo: true },
+    });
+    if (!oportunidade?.propostaArquivo) {
+      throw new NotFoundException('Nenhum arquivo de proposta anexado a esta oportunidade.');
+    }
+    return {
+      arquivo: oportunidade.propostaArquivo,
+      nome: oportunidade.propostaArquivoNome ?? 'proposta.pdf',
+      tipo: oportunidade.propostaArquivoTipo ?? 'application/octet-stream',
+    };
+  }
+
+  async removerProposta(id: string): Promise<Oportunidade> {
+    const oportunidade = await this.buscarPorId(id);
+    oportunidade.propostaArquivo = null;
+    oportunidade.propostaArquivoNome = null;
+    oportunidade.propostaArquivoTipo = null;
+    return this.oportunidadesRepo.save(oportunidade);
+  }
+
   // Equivalente ao "quadrototais" do legado: pipeline segmentado por
   // classe de prospect (A/B/C), com contagem, valor total e confiabilidade
   // média — filtrável por vendedor, especialista, vertical e janela de

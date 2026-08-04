@@ -91,6 +91,19 @@ export class Oportunidade {
   @Column({ type: 'text', nullable: true, name: 'motivo_perda' })
   motivoPerda: string | null;
 
+  // --- anexo do arquivo da proposta comercial ---
+  // Guardado como bytea direto no Postgres — evita depender de um
+  // provedor de storage externo só para este caso de uso simples.
+
+  @Column({ type: 'bytea', nullable: true, name: 'proposta_arquivo', select: false })
+  propostaArquivo: Buffer | null;
+
+  @Column({ length: 200, nullable: true, name: 'proposta_arquivo_nome' })
+  propostaArquivoNome: string | null;
+
+  @Column({ length: 100, nullable: true, name: 'proposta_arquivo_tipo' })
+  propostaArquivoTipo: string | null;
+
   @OneToMany(() => HistoricoOportunidade, (h) => h.oportunidade)
   historico: HistoricoOportunidade[];
 

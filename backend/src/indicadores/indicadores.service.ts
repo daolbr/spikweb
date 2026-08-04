@@ -5,8 +5,6 @@ import { Oportunidade } from '../oportunidades/oportunidade.entity';
 import { EstagioFunil } from '../oportunidades/estagio-funil.enum';
 import { Atividade } from '../atividades/atividade.entity';
 import { StatusAtividade } from '../atividades/atividade.enums';
-import { Proposta } from '../propostas/proposta.entity';
-import { StatusProposta } from '../propostas/status-proposta.enum';
 
 @Injectable()
 export class IndicadoresService {
@@ -15,27 +13,13 @@ export class IndicadoresService {
     private readonly oportunidadesRepo: Repository<Oportunidade>,
     @InjectRepository(Atividade)
     private readonly atividadesRepo: Repository<Atividade>,
-    @InjectRepository(Proposta)
-    private readonly propostasRepo: Repository<Proposta>,
   ) {}
 
   async resumo() {
-    const [
-      valorPorEstagio,
-      contagemGanhaPerdida,
-      contagemAtividades,
-      propostasAprovadas,
-      pipelineAtivo,
-    ] = await Promise.all([
+    const [valorPorEstagio, contagemGanhaPerdida, contagemAtividades, pipelineAtivo] = await Promise.all([
       this.valorPorEstagio(),
       this.contagemGanhaPerdida(),
       this.contagemAtividades(),
-      this.propostasRepo
-        .createQueryBuilder('p')
-        .select('COALESCE(SUM(p.valor_total), 0)', 'total')
-        .addSelect('COUNT(*)', 'quantidade')
-        .where('p.status = :status', { status: StatusProposta.APROVADA })
-        .getRawOne<{ total: string; quantidade: string }>(),
       this.oportunidadesRepo
         .createQueryBuilder('o')
         .select('COALESCE(SUM(o.valor), 0)', 'total')
@@ -63,10 +47,6 @@ export class IndicadoresService {
         taxa: taxaConversao,
       },
       atividades: contagemAtividades,
-      receita: {
-        propostasAprovadas: Number(propostasAprovadas?.quantidade ?? 0),
-        valorAprovado: Number(propostasAprovadas?.total ?? 0),
-      },
     };
   }
 
