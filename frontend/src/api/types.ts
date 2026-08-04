@@ -81,6 +81,8 @@ export interface Oportunidade {
   especialistaId: string | null;
   especialista?: { id: string; nome: string } | null;
   vertical: string | null;
+  propostaArquivoNome: string | null;
+  propostaArquivoTipo: string | null;
 }
 
 export type FunilAgrupado = Record<EstagioFunil, Oportunidade[]>;
@@ -212,4 +214,18 @@ export interface UsuarioResumo {
 export interface QuadroTotais {
   geral: { total: number; valorTotal: number };
   porClasse: Record<'A' | 'B' | 'C' | 'SEM_CLASSE', { total: number; valorTotal: number; confiabilidadeMedia: number }>;
+}
+
+export interface BaseInstaladaItem {
+  id: string;
+  produtoServico: string;
+  empresaId: string;
+  empresa?: Empresa;
+  oportunidadeId: string | null;
+  oportunidade?: { id: string; titulo: string } | null;
+  dataVenda: string;
+  dataRenovacao: string | null;
+  valor: number | string | null;
+  observacoes: string | null;
+  criadoEm: string;
 }

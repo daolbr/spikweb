@@ -9,10 +9,7 @@ import Empresas from './pages/Empresas';
 import EmpresaDetalhe from './pages/EmpresaDetalhe';
 import Oportunidades from './pages/Oportunidades';
 import Agenda from './pages/Agenda';
-import Propostas from './pages/Propostas';
-import PropostaDetalhe from './pages/PropostaDetalhe';
-import Campanhas from './pages/Campanhas';
-import Projetos from './pages/Projetos';
+import BaseInstalada from './pages/BaseInstalada';
 import ConfiguracaoCamposCustomizados from './pages/ConfiguracaoCamposCustomizados';
 
 const queryClient = new QueryClient();
@@ -36,10 +33,7 @@ export default function App() {
               <Route path="/empresas/:id" element={<EmpresaDetalhe />} />
               <Route path="/oportunidades" element={<Oportunidades />} />
               <Route path="/agenda" element={<Agenda />} />
-              <Route path="/propostas" element={<Propostas />} />
-              <Route path="/propostas/:id" element={<PropostaDetalhe />} />
-              <Route path="/campanhas" element={<Campanhas />} />
-              <Route path="/projetos" element={<Projetos />} />
+              <Route path="/base-instalada" element={<BaseInstalada />} />
               <Route path="/configuracoes/campos" element={<ConfiguracaoCamposCustomizados />} />
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

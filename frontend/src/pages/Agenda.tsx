@@ -27,10 +27,103 @@ function formatarHora(iso: string) {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+const DIAS_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const NOMES_MES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
+function CalendarioMensal({
+  atividades,
+  onSelecionarDia,
+}: {
+  atividades: Atividade[];
+  onSelecionarDia: (atividade: Atividade) => void;
+}) {
+  const [referencia, setReferencia] = useState(new Date());
+  const ano = referencia.getFullYear();
+  const mes = referencia.getMonth();
+
+  const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  const hoje = new Date();
+  const ehHoje = (dia: number) => hoje.getFullYear() === ano && hoje.getMonth() === mes && hoje.getDate() === dia;
+
+  const porDia = new Map<number, Atividade[]>();
+  for (const atividade of atividades) {
+    const data = new Date(atividade.dataInicio);
+    if (data.getFullYear() === ano && data.getMonth() === mes) {
+      const dia = data.getDate();
+      (porDia.get(dia) ?? porDia.set(dia, []).get(dia)!).push(atividade);
+    }
+  }
+
+  const celulas: (number | null)[] = [
+    ...Array(primeiroDiaSemana).fill(null),
+    ...Array.from({ length: diasNoMes }, (_, i) => i + 1),
+  ];
+
+  return (
+    <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: 'var(--color-line)' }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-line)' }}>
+        <button onClick={() => setReferencia(new Date(ano, mes - 1, 1))} className="text-sm px-2" style={{ color: 'var(--color-ink-soft)' }}>‹</button>
+        <p className="text-sm font-medium text-ink">{NOMES_MES[mes]} {ano}</p>
+        <button onClick={() => setReferencia(new Date(ano, mes + 1, 1))} className="text-sm px-2" style={{ color: 'var(--color-ink-soft)' }}>›</button>
+      </div>
+      <div className="grid grid-cols-7 text-center text-xs font-medium py-2" style={{ color: 'var(--color-ink-soft)' }}>
+        {DIAS_SEMANA.map((d) => <div key={d}>{d}</div>)}
+      </div>
+      <div className="grid grid-cols-7 border-t" style={{ borderColor: 'var(--color-line)' }}>
+        {celulas.map((dia, i) => (
+          <div
+            key={i}
+            className="min-h-[84px] border-b border-r p-1.5"
+            style={{ borderColor: 'var(--color-line)' }}
+          >
+            {dia && (
+              <>
+                <p
+                  className="text-xs mb-1 h-5 w-5 flex items-center justify-center rounded-full"
+                  style={ehHoje(dia) ? { backgroundColor: 'var(--color-petrol-600)', color: 'white' } : { color: 'var(--color-ink-soft)' }}
+                >
+                  {dia}
+                </p>
+                <div className="space-y-0.5">
+                  {(porDia.get(dia) ?? []).slice(0, 3).map((a) => (
+                    <button
+                      key={a.id}
+                      onClick={() => onSelecionarDia(a)}
+                      className="w-full text-left text-[10px] leading-tight rounded px-1 py-0.5 truncate block"
+                      style={{
+                        backgroundColor: a.status === 'CONCLUIDA' ? 'var(--color-line)' : 'var(--color-petrol-50)',
+                        color: a.status === 'CONCLUIDA' ? 'var(--color-ink-soft)' : 'var(--color-petrol-600)',
+                        textDecoration: a.status === 'CONCLUIDA' ? 'line-through' : undefined,
+                      }}
+                      title={a.titulo}
+                    >
+                      {formatarHora(a.dataInicio)} {a.titulo}
+                    </button>
+                  ))}
+                  {(porDia.get(dia)?.length ?? 0) > 3 && (
+                    <p className="text-[10px]" style={{ color: 'var(--color-ink-soft)' }}>
+                      +{(porDia.get(dia)?.length ?? 0) - 3} mais
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Agenda() {
   const queryClient = useQueryClient();
   const [filtro, setFiltro] = useState<Filtro>('PENDENTE');
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [visualizacao, setVisualizacao] = useState<'lista' | 'calendario'>('lista');
 
   const { data: atividades, isLoading } = useQuery<Atividade[]>({
     queryKey: ['atividades'],
@@ -91,7 +184,7 @@ export default function Agenda() {
   }, {});
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-8" style={{ maxWidth: visualizacao === 'calendario' ? '56rem' : '48rem' }}>
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 style={{ fontFamily: 'var(--font-display)' }} className="text-2xl font-semibold text-ink">
@@ -110,24 +203,43 @@ export default function Agenda() {
         </button>
       </div>
 
-      <div className="flex gap-1 mb-5">
-        {FILTROS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFiltro(f)}
-            className="text-sm rounded-md px-3 py-1.5 font-medium transition"
-            style={{
-              backgroundColor: filtro === f ? 'var(--color-petrol-600)' : 'transparent',
-              color: filtro === f ? 'white' : 'var(--color-ink-soft)',
-            }}
-          >
-            {ROTULO_FILTRO[f]}
-          </button>
-        ))}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex gap-1">
+          {FILTROS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFiltro(f)}
+              className="text-sm rounded-md px-3 py-1.5 font-medium transition"
+              style={{
+                backgroundColor: filtro === f ? 'var(--color-petrol-600)' : 'transparent',
+                color: filtro === f ? 'white' : 'var(--color-ink-soft)',
+              }}
+            >
+              {ROTULO_FILTRO[f]}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1">
+          {(['lista', 'calendario'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setVisualizacao(v)}
+              className="text-sm rounded-md px-3 py-1.5 font-medium transition capitalize"
+              style={{
+                backgroundColor: visualizacao === v ? 'var(--color-petrol-600)' : 'transparent',
+                color: visualizacao === v ? 'white' : 'var(--color-ink-soft)',
+              }}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? (
         <p className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>Carregando…</p>
+      ) : visualizacao === 'calendario' ? (
+        <CalendarioMensal atividades={filtradas} onSelecionarDia={(a) => a.status === 'PENDENTE' && concluir.mutate(a.id)} />
       ) : Object.keys(grupos).length === 0 ? (
         <div className="bg-white border rounded-lg p-10 text-center" style={{ borderColor: 'var(--color-line)' }}>
           <p className="text-sm font-medium text-ink">Nenhuma atividade por aqui</p>

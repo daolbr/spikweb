@@ -6,9 +6,7 @@ const ITENS_NAV = [
   { para: '/oportunidades', rotulo: 'Funil de vendas' },
   { para: '/agenda', rotulo: 'Agenda' },
   { para: '/empresas', rotulo: 'Empresas' },
-  { para: '/propostas', rotulo: 'Propostas' },
-  { para: '/campanhas', rotulo: 'Campanhas' },
-  { para: '/projetos', rotulo: 'Projetos' },
+  { para: '/base-instalada', rotulo: 'Base instalada' },
 ];
 
 export default function Layout() {

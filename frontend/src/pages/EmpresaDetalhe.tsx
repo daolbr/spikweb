@@ -28,6 +28,7 @@ export default function EmpresaDetalhe() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [mostrarFormContato, setMostrarFormContato] = useState(false);
+  const [editando, setEditando] = useState(false);
 
   const { data: empresa, isLoading } = useQuery<Empresa>({
     queryKey: ['empresa', id],
@@ -48,6 +49,15 @@ export default function EmpresaDetalhe() {
     },
   });
 
+  const atualizarEmpresa = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => api.patch(`/empresas/${id}`, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['empresa', id] });
+      setEditando(false);
+    },
+    onError: (err: any) => alert(err?.response?.data?.message ?? 'Não foi possível salvar as alterações.'),
+  });
+
   const removerEmpresa = useMutation({
     mutationFn: async () => api.delete(`/empresas/${id}`),
     onSuccess: () => navigate('/empresas'),
@@ -62,6 +72,17 @@ export default function EmpresaDetalhe() {
       cargo: String(form.get('cargo') ?? '') || undefined,
       telefone: String(form.get('telefone') ?? '') || undefined,
     } as Partial<Contato>);
+  }
+
+  function aoSubmeterEdicao(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const payload: Record<string, unknown> = {};
+    for (const campo of ['nome', 'cnpj', 'porte', 'segmento', 'cidade', 'uf', 'telefone', 'site', 'observacoes']) {
+      const valor = String(form.get(campo) ?? '').trim();
+      if (valor) payload[campo] = valor;
+    }
+    atualizarEmpresa.mutate(payload);
   }
 
   if (isLoading || !empresa) {
@@ -91,34 +112,108 @@ export default function EmpresaDetalhe() {
             <p className="text-sm mt-1" style={{ color: 'var(--color-ink-soft)' }}>{empresa.segmento}</p>
           )}
         </div>
-        <button
-          onClick={() => {
-            if (confirm(`Remover ${empresa.nome}? Esta ação não pode ser desfeita.`)) {
-              removerEmpresa.mutate();
-            }
-          }}
-          className="text-sm rounded-md px-3 py-1.5 border"
-          style={{ borderColor: 'var(--color-line)', color: 'var(--color-clay-700)' }}
-        >
-          Remover empresa
-        </button>
+        <div className="flex gap-2">
+          {!editando && (
+            <button
+              onClick={() => setEditando(true)}
+              className="text-sm rounded-md px-3 py-1.5 border font-medium"
+              style={{ borderColor: 'var(--color-line)', color: 'var(--color-petrol-600)' }}
+            >
+              Editar
+            </button>
+          )}
+          <button
+            onClick={() => {
+              if (confirm(`Remover ${empresa.nome}? Esta ação não pode ser desfeita.`)) {
+                removerEmpresa.mutate();
+              }
+            }}
+            className="text-sm rounded-md px-3 py-1.5 border"
+            style={{ borderColor: 'var(--color-line)', color: 'var(--color-clay-700)' }}
+          >
+            Remover empresa
+          </button>
+        </div>
       </div>
 
-      <div
-        className="bg-white border rounded-lg p-5 grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8"
-        style={{ borderColor: 'var(--color-line)' }}
-      >
-        {CAMPOS_EMPRESA.map(({ chave, rotulo, formatar }) => (
-          <div key={chave}>
-            <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--color-ink-soft)' }}>
-              {rotulo}
-            </p>
-            <p className="text-sm text-ink">
-              {formatar ? formatar(empresa[chave]) || '—' : (empresa[chave] as string) || '—'}
-            </p>
+      {editando ? (
+        <form
+          onSubmit={aoSubmeterEdicao}
+          className="bg-white border rounded-lg p-5 mb-8 space-y-3"
+          style={{ borderColor: 'var(--color-line)' }}
+        >
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1">Nome</label>
+              <input name="nome" defaultValue={empresa.nome} required className="w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: 'var(--color-line)' }} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1">CNPJ</label>
+              <input name="cnpj" defaultValue={empresa.cnpj ?? ''} placeholder="XX.XXX.XXX/XXXX-XX" className="w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: 'var(--color-line)' }} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1">Segmento</label>
+              <input name="segmento" defaultValue={empresa.segmento ?? ''} className="w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: 'var(--color-line)' }} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1">Porte</label>
+              <select name="porte" defaultValue={empresa.porte ?? ''} className="w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: 'var(--color-line)' }}>
+                <option value="">—</option>
+                {Object.entries(ROTULO_PORTE).map(([v, r]) => <option key={v} value={v}>{r}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1">Cidade</label>
+              <input name="cidade" defaultValue={empresa.cidade ?? ''} className="w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: 'var(--color-line)' }} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1">UF</label>
+              <input name="uf" defaultValue={empresa.uf ?? ''} maxLength={2} className="w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: 'var(--color-line)' }} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1">Telefone</label>
+              <input name="telefone" defaultValue={empresa.telefone ?? ''} className="w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: 'var(--color-line)' }} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1">Site</label>
+              <input name="site" defaultValue={empresa.site ?? ''} className="w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: 'var(--color-line)' }} />
+            </div>
           </div>
-        ))}
-      </div>
+          <div>
+            <label className="block text-xs font-medium text-ink mb-1">Observações</label>
+            <textarea name="observacoes" defaultValue={empresa.observacoes ?? ''} rows={2} className="w-full rounded-md border px-3 py-2 text-sm resize-none" style={{ borderColor: 'var(--color-line)' }} />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={() => setEditando(false)} className="text-sm rounded-md px-3 py-1.5 border" style={{ borderColor: 'var(--color-line)' }}>
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={atualizarEmpresa.isPending}
+              className="text-sm rounded-md px-3 py-1.5 font-medium text-white disabled:opacity-60"
+              style={{ backgroundColor: 'var(--color-petrol-600)' }}
+            >
+              {atualizarEmpresa.isPending ? 'Salvando…' : 'Salvar alterações'}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div
+          className="bg-white border rounded-lg p-5 grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8"
+          style={{ borderColor: 'var(--color-line)' }}
+        >
+          {CAMPOS_EMPRESA.map(({ chave, rotulo, formatar }) => (
+            <div key={chave}>
+              <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--color-ink-soft)' }}>
+                {rotulo}
+              </p>
+              <p className="text-sm text-ink">
+                {formatar ? formatar(empresa[chave]) || '—' : (empresa[chave] as string) || '—'}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <CamposCustomizadosPainel entidade="EMPRESA" entidadeId={empresa.id} />
 

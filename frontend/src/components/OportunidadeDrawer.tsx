@@ -28,6 +28,15 @@ const COR_ESTAGIO: Record<string, string> = {
 
 const COR_CLASSE: Record<string, string> = { A: '#3B8054', B: 'var(--color-clay-500)', C: 'var(--color-ink-soft)' };
 
+function IconeArquivo() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+    </svg>
+  );
+}
+
 export default function OportunidadeDrawer({ id, onFechar }: { id: string; onFechar: () => void }) {
   const queryClient = useQueryClient();
   const [anotacao, setAnotacao] = useState('');
@@ -68,6 +77,34 @@ export default function OportunidadeDrawer({ id, onFechar }: { id: string; onFec
     },
     onError: (err: any) => alert(err?.response?.data?.message ?? 'Não foi possível registrar.'),
   });
+
+  const anexarArquivo = useMutation({
+    mutationFn: async (arquivo: File) => {
+      const form = new FormData();
+      form.append('arquivo', arquivo);
+      const { data } = await api.post(`/oportunidades/${id}/proposta-arquivo`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['oportunidade', id] }),
+    onError: (err: any) => alert(err?.response?.data?.message ?? 'Não foi possível anexar o arquivo.'),
+  });
+
+  const removerArquivo = useMutation({
+    mutationFn: async () => api.delete(`/oportunidades/${id}/proposta-arquivo`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['oportunidade', id] }),
+  });
+
+  async function baixarArquivo() {
+    const resposta = await api.get(`/oportunidades/${id}/proposta-arquivo`, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([resposta.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = oportunidade?.propostaArquivoNome ?? 'proposta';
+    link.click();
+    window.URL.revokeObjectURL(url);
+  }
 
   function aoSubmeter(e: FormEvent) {
     e.preventDefault();
@@ -141,6 +178,41 @@ export default function OportunidadeDrawer({ id, onFechar }: { id: string; onFec
                 Motivo da perda: {oportunidade.motivoPerda}
               </div>
             )}
+
+            <div className="mb-6">
+              <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--color-ink-soft)' }}>Proposta comercial (arquivo)</p>
+              {oportunidade.propostaArquivoNome ? (
+                <div className="flex items-center gap-2 bg-black/[0.02] rounded-md p-3">
+                  <IconeArquivo />
+                  <button onClick={baixarArquivo} className="text-sm flex-1 text-left truncate" style={{ color: 'var(--color-petrol-600)' }}>
+                    {oportunidade.propostaArquivoNome}
+                  </button>
+                  <button
+                    onClick={() => removerArquivo.mutate()}
+                    className="text-xs shrink-0"
+                    style={{ color: 'var(--color-clay-700)' }}
+                  >
+                    remover
+                  </button>
+                </div>
+              ) : (
+                <label
+                  className="flex items-center justify-center gap-2 border border-dashed rounded-md p-3 text-sm cursor-pointer"
+                  style={{ borderColor: 'var(--color-line)', color: 'var(--color-ink-soft)' }}
+                >
+                  {anexarArquivo.isPending ? 'Enviando…' : 'Clique para anexar o PDF/DOCX da proposta'}
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx"
+                    onChange={(e) => {
+                      const arquivo = e.target.files?.[0];
+                      if (arquivo) anexarArquivo.mutate(arquivo);
+                    }}
+                  />
+                </label>
+              )}
+            </div>
 
             <CamposCustomizadosPainel entidade="OPORTUNIDADE" entidadeId={oportunidade.id} />
 
